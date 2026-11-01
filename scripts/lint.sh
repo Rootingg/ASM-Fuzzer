@@ -35,7 +35,7 @@ done < <(find . -type f \
 
 nasm_flags=(-f elf64 -I include/ -w+all -w+error)
 printf 'bits 64\nnop\n' > "$tmp/probe.asm"
-if nasm -f elf64 -w+error -w-reloc-rel-dword -o "$tmp/probe.o" "$tmp/probe.asm" >/dev/null 2>&1; then
+if nasm -f elf64 -w+all -w+error -w-reloc-rel-dword -o "$tmp/probe.o" "$tmp/probe.asm" >/dev/null 2>&1; then
     nasm_flags+=(-w-reloc-rel-dword)
 fi
 
