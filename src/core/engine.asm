@@ -1,26 +1,30 @@
-; Each trial flips one bit of a fresh copy of the seed.
-; A timeout is not a crash. The first crash is saved, and the run stops there
-; unless the caller asked to continue.
+; Each trial copies the seed and applies one mutation.
+; Without a seed the schedule is deterministic. With a seed it is xorshift64.
+; Crashes are kept once per signal. The first crash stops the run unless
+; the caller asked to continue.
 
 %include "constants.inc"
 
 section .text
 extern mem_copy
-extern bitflip_apply
+extern apply_mutation
 extern execute_target
 extern crash_save
+extern crash_name
 global fuzz_campaign
 
-; fuzz_campaign - search a bounded bitflip neighbourhood of one seed.
+; fuzz_campaign - run one campaign.
 ; IN:  rdi pointer to the campaign record:
 ;        +0  target path
-;        +8  seed
+;        +8  seed bytes
 ;        +16 length
 ;        +24 scratch
-;        +32 crash path
+;        +32 output path (file, or directory when continuing)
 ;        +40 timeout milliseconds
 ;        +48 iterations
 ;        +56 stop on crash (1 or 0)
+;        +64 RNG seed (0 selects the deterministic schedule)
+;        +72 path buffer for crash filenames
 ; OUT: rax EXIT_OK, EXIT_CRASH, EXIT_TIMEOUT, or -1
 fuzz_campaign:
     push rbx
@@ -38,28 +42,21 @@ fuzz_campaign:
     mov rax, [rdi + 40]
     mov rcx, [rdi + 48]
     mov rdx, [rdi + 56]
+    mov r8, [rdi + 64]
+    mov r9, [rdi + 72]
     test rcx, rcx
     jz .bad
 
-    sub rsp, 48
+    sub rsp, 80
     mov qword [rsp], 0
+    mov [rsp + 8], rcx
     mov [rsp + 16], rax
     mov [rsp + 24], rdx
     mov qword [rsp + 32], 0
     mov qword [rsp + 40], 0
-
-    test r13, r13
-    jz .use_iterations
-    mov rax, r13
-    shl rax, 3
-    cmp rax, rcx
-    jbe .store_trials
-    mov rax, rcx
-    jmp .store_trials
-.use_iterations:
-    mov rax, rcx
-.store_trials:
-    mov [rsp + 8], rax
+    mov qword [rsp + 48], 0
+    mov [rsp + 56], r8
+    mov [rsp + 72], r9
 
 .loop:
     mov rax, [rsp]
@@ -75,7 +72,8 @@ fuzz_campaign:
     mov rdi, r14
     mov rsi, r13
     mov rdx, [rsp]
-    call bitflip_apply
+    lea rcx, [rsp + 56]
+    call apply_mutation
     test rax, rax
     jnz .bad_stack
 
@@ -84,6 +82,7 @@ fuzz_campaign:
     mov rsi, r14
     mov rdx, r13
     mov rcx, [rsp + 16]
+    lea r8, [rsp + 64]
     call execute_target
     cmp rax, EXIT_CRASH
     je .on_crash
@@ -98,15 +97,39 @@ fuzz_campaign:
     jmp .next
 
 .on_crash:
-    cmp qword [rsp + 40], 0
-    jne .after_save
+    mov eax, [rsp + 64]
+    and eax, 0x7f
+    cmp qword [rsp + 24], 0
+    jne .save_file
+    cmp eax, 63
+    ja .save_named
+    mov cl, al
+    mov r11, 1
+    shl r11, cl
+    test [rsp + 48], r11
+    jnz .after_save
+    or [rsp + 48], r11
+.save_named:
     mov rdi, r15
+    mov esi, eax
+    mov rdx, [rsp]
+    mov rcx, [rsp + 72]
+    mov r8, 512
+    call crash_name
+    test rax, rax
+    jnz .bad_stack
+    mov rdi, [rsp + 72]
+    jmp .write_crash
+
+.save_file:
+    mov rdi, r15
+.write_crash:
     mov rsi, r14
     mov rdx, r13
     call crash_save
     test rax, rax
     jnz .bad_stack
-    mov qword [rsp + 40], 1
+    inc qword [rsp + 40]
 .after_save:
     cmp qword [rsp + 24], 0
     je .next
@@ -131,7 +154,7 @@ fuzz_campaign:
 .bad_stack:
     mov rax, -1
 .leave_stack:
-    add rsp, 48
+    add rsp, 80
     jmp .leave
 .bad:
     mov rax, -1

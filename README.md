@@ -26,17 +26,17 @@ make test
 
 ```bash
 ./build/asm-fuzzer --target ./build/demo-target --input seed.bin \
-    --output crashes/latest.bin --timeout 1000 --iterations 64
+    --output crashes --timeout 1000 --iterations 1000 --seed 1 --no-stop-on-crash
 ```
 
-Le programme écrit `clean`, `crash`, `timeout` ou `error`. Il se termine avec le code 0, 2, 3 ou 1. `--stop-on-crash` est le défaut : la première faute arrête la campagne. La feuille de route est dans [docs/roadmap.md](docs/roadmap.md).
+Le programme écrit `clean`, `crash`, `timeout` ou `error`. Il se termine avec le code 0, 2, 3 ou 1. `--stop-on-crash` est le défaut : la première faute est écrite dans le fichier `--output` et la campagne s'arrête. Sans cet arrêt, `--output` est un répertoire et chaque signal n'y est enregistré qu'une fois. La feuille de route est dans [docs/roadmap.md](docs/roadmap.md).
 
 ## Vérifications
 
 | Commande | Rôle |
 | --- | --- |
 | `make all` | Compile et lie le fuzzer |
-| `make test` | Unités, oracle de crash, faux positif, rejeu, timeouts |
+| `make test` | Unités, oracle de crash, timeouts, mutations reproductibles |
 | `make lint` | NASM en warnings-as-errors, fins de ligne, espaces |
 | `make security` | Secrets, actions épinglées, permissions des workflows |
 

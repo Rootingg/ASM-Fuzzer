@@ -29,6 +29,7 @@ global execute_target
 
 ; execute_target - execute a program once.
 ; IN:  rdi path, rsi input, rdx length, rcx timeout in milliseconds
+;      r8 pointer to a 32-bit wait status, or 0
 ; OUT: rax EXIT_OK, EXIT_CRASH, EXIT_TIMEOUT, EXIT_ERROR, or -1
 execute_target:
     push rbx
@@ -47,6 +48,7 @@ execute_target:
     mov r14, DEFAULT_TIMEOUT_MS
 .have_timeout:
     sub rsp, 80
+    mov [rsp + 72], r8
     mov dword [rsp], -1
     mov dword [rsp + 4], -1
     mov dword [rsp + 12], -1
@@ -191,6 +193,12 @@ execute_target:
     jmp .supervise
 
 .classify:
+    mov r11, [rsp + 72]
+    test r11, r11
+    jz .classify_call
+    mov eax, [rsp + 8]
+    mov [r11], eax
+.classify_call:
     mov edi, [rsp + 8]
     call classify_wait_status
     jmp .cleanup
@@ -210,6 +218,12 @@ execute_target:
     call sys_wait4
     cmp rax, EINTR
     je .reap_timeout
+    mov r11, [rsp + 72]
+    test r11, r11
+    jz .timeout_code
+    mov eax, [rsp + 8]
+    mov [r11], eax
+.timeout_code:
     mov eax, EXIT_TIMEOUT
     jmp .cleanup
 
@@ -229,6 +243,11 @@ execute_target:
     cmp rax, EINTR
     je .reap_fail
 .fail:
+    mov r11, [rsp + 72]
+    test r11, r11
+    jz .fail_code
+    mov dword [r11], 0
+.fail_code:
     mov rax, -1
     jmp .cleanup
 

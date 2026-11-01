@@ -36,7 +36,7 @@ La campagne d'intégration dans `tests/integration/campaign.sh` doit garder troi
 - une entrée qui ne fault pas n'est pas signalée ;
 - le fichier écrit par le fuzzer rejoue le même fault.
 
-Les graines sont produites dans un répertoire temporaire. `BRSH` devient `CRSH` en inversant le bit 0. `hello` ne peut pas devenir `CRSH` avec un seul bitflip, ce qui sert de contrôle négatif.
+Les graines sont produites dans un répertoire temporaire. `BRSH` devient `CRSH` en inversant le bit 0. `hello` ne peut pas devenir `CRSH` avec une seule mutation, ce qui sert de contrôle négatif. `--seed 0` est refusé : un état xorshift nul ne change jamais. Sans `--seed`, l'ordre des essais reste fixe.
 
 ## Ce qui ne va pas en CI
 

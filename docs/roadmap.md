@@ -13,11 +13,13 @@ Rendre l'exécution mesurable et sûre avant d'élargir les mutations.
 
 ## v0.2.0 — Moteur de mutation
 
-- Brancher bitflip, byteflip et l'arithmétique dans la campagne.
-- Itérations au-delà du voisinage des 64 premiers bits.
-- Graine pseudo-aléatoire reproductible avec `--seed`.
-- Continuer après un crash, sauvegarder plusieurs entrées, dédupliquer par signal.
-- `--stop-on-crash` reste disponible.
+Présent sur `develop`. Le tag attend une branche `release/*`.
+
+- Bitflip, byteflip et arithmétique sont branchés dans la campagne.
+- `--iterations` dépasse le voisinage des premiers bits.
+- `--seed` rejoue une série xorshift64.
+- `--no-stop-on-crash` conserve une entrée par signal.
+- `--stop-on-crash` reste le défaut.
 
 ## v0.3.0 — Corpus
 

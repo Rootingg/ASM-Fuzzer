@@ -18,11 +18,13 @@ cfg_output: resq 1
 cfg_timeout: resq 1
 cfg_iterations: resq 1
 cfg_stop: resq 1
+cfg_seed: resq 1
+path_buf: resb 512
 
 section .rodata
 msg_usage: db "usage: asm-fuzzer TARGET CORPUS OUTPUT", 10
            db "       asm-fuzzer --target PATH --input PATH --output PATH", 10
-           db "                  [--timeout MS] [--iterations N]", 10
+           db "                  [--timeout MS] [--iterations N] [--seed N]", 10
            db "                  [--stop-on-crash|--no-stop-on-crash]", 10
 msg_usage_len equ $ - msg_usage
 msg_clean: db "clean", 10
@@ -38,6 +40,7 @@ opt_input: db "--input", 0
 opt_output: db "--output", 0
 opt_timeout: db "--timeout", 0
 opt_iterations: db "--iterations", 0
+opt_seed: db "--seed", 0
 opt_stop: db "--stop-on-crash", 0
 opt_nostop: db "--no-stop-on-crash", 0
 
@@ -52,6 +55,7 @@ _start:
     mov qword [rel cfg_timeout], DEFAULT_TIMEOUT_MS
     mov qword [rel cfg_iterations], CAMPAIGN_MAX_BITS
     mov qword [rel cfg_stop], 1
+    mov qword [rel cfg_seed], 0
     mov qword [rel cfg_target], 0
     mov qword [rel cfg_input], 0
     mov qword [rel cfg_output], 0
@@ -125,7 +129,7 @@ _start:
     lea rsi, [rel opt_iterations]
     call str_eq
     test rax, rax
-    jnz .try_stop
+    jnz .try_seed
     call take_value
     test rax, rax
     jz .usage
@@ -134,6 +138,21 @@ _start:
     cmp rax, 0
     jle .usage
     mov [rel cfg_iterations], rax
+    jmp .next_flag
+.try_seed:
+    mov rdi, [r12 + r13*8]
+    lea rsi, [rel opt_seed]
+    call str_eq
+    test rax, rax
+    jnz .try_stop
+    call take_value
+    test rax, rax
+    jz .usage
+    mov rdi, rax
+    call parse_u64
+    cmp rax, 0
+    jle .usage
+    mov [rel cfg_seed], rax
     jmp .next_flag
 .try_stop:
     mov rdi, [r12 + r13*8]
@@ -173,7 +192,7 @@ _start:
     js .error
     mov rbx, rax
 
-    sub rsp, 64
+    sub rsp, 80
     mov rax, [rel cfg_target]
     mov [rsp], rax
     lea rax, [rel input_buf]
@@ -189,9 +208,13 @@ _start:
     mov [rsp + 48], rax
     mov rax, [rel cfg_stop]
     mov [rsp + 56], rax
+    mov rax, [rel cfg_seed]
+    mov [rsp + 64], rax
+    lea rax, [rel path_buf]
+    mov [rsp + 72], rax
     mov rdi, rsp
     call fuzz_campaign
-    add rsp, 64
+    add rsp, 80
 
     cmp rax, EXIT_CRASH
     je .crash
