@@ -6,6 +6,7 @@ Le format est inspiré de Keep a Changelog. Les versions suivent Semantic Versio
 
 ### Added
 
+- Refus d'une exécution root, `no_new_privs`, capacités vidées, et fermeture des descripteurs hérités par la cible.
 - Couverture par arêtes : les entrées qui ouvrent un chemin nouveau alimentent les mutations suivantes.
 - Corpus en répertoire, minimisation des crashs, et débit `execs` / `rate`.
 - Campagne à trois mutateurs, graine `--seed` reproductible, et un fichier de crash par signal.

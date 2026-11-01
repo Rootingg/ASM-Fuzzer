@@ -32,6 +32,7 @@ extern classify_wait_status
 extern coverage_reset
 extern coverage_drain
 extern coverage_commit
+extern privilege_lock_child
 global execute_target
 
 ; execute_target - execute a program once.
@@ -361,6 +362,10 @@ execute_target:
     mov rsi, rsp
     call sys_setrlimit
     add rsp, 16
+
+    call privilege_lock_child
+    test rax, rax
+    js .child_fail
 
     sub rsp, 24
     mov [rsp], rbx

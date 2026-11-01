@@ -39,6 +39,11 @@ Présent sur `develop`. Le tag attend une branche `release/*`.
 
 ## v1.0.0 — Première version mature
 
-Isolation par namespace ou conteneur, système de fichiers restreint, retrait des privilèges, éventuellement seccomp. Tests de régression, documentation utilisateur, benchmarks et releases reproductibles.
+Pas encore. L'isolation se découpe, et `main` ne reçoit une release qu'une fois l'ensemble évalué.
 
-Les `RLIMIT_*` du bootstrap ne sont pas cette isolation. Une cible non fiable ne doit pas être lancée sur un runner GitHub.
+- `feature/privilege-isolation` : `no_new_privs`, capacités vidées, refus du root, descripteurs hérités fermés.
+- `feature/namespace-isolation` : espaces utilisateur, montage, PID et réseau, avec un repli explicite s'ils sont indisponibles.
+- `feature/filesystem-isolation` : arborescence minimale et descripteurs hérités revus dans ce cadre.
+- `feature/seccomp-policy` : syscalls autorisés, avec des tests positifs et négatifs.
+
+`no_new_privs` seul n'est pas un bac à sable. Les sous-processus et les descripteurs se jugent avec les étapes suivantes. Une cible non fiable ne doit pas être lancée sur un runner GitHub.

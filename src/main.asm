@@ -66,6 +66,7 @@ extern sys_close
 extern sys_monotonic_ms
 extern exec_count
 extern coverage_total
+extern privilege_guard
 global _start
 
 _start:
@@ -203,6 +204,9 @@ _start:
     test rax, rax
     jz .usage
 
+    call privilege_guard
+    test rax, rax
+    js .error
     call sys_monotonic_ms
     mov [rel start_ms], rax
     call dispatch_inputs

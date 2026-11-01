@@ -17,6 +17,7 @@ FUZZER_OBJS := \
 	$(BUILD)/src/core/executor.o \
 	$(BUILD)/src/core/signals.o \
 	$(BUILD)/src/core/coverage.o \
+	$(BUILD)/src/core/privilege.o \
 	$(BUILD)/src/mutators/bitflip.o \
 	$(BUILD)/src/mutators/byteflip.o \
 	$(BUILD)/src/mutators/arithmetic.o \
@@ -43,10 +44,12 @@ tools: \
 	$(BUILD)/multi-target \
 	$(BUILD)/shrink-target \
 	$(BUILD)/path-target \
+	$(BUILD)/priv-target \
 	$(BUILD)/test-mutators \
 	$(BUILD)/test-memory \
 	$(BUILD)/test-signals \
-	$(BUILD)/test-schedule
+	$(BUILD)/test-schedule \
+	$(BUILD)/test-privilege
 
 $(BUILD)/asm-fuzzer: $(FUZZER_OBJS)
 	mkdir -p $(dir $@)
@@ -79,6 +82,14 @@ $(BUILD)/shrink-target: $(BUILD)/tests/targets/shrink_target.o
 $(BUILD)/path-target: $(BUILD)/tests/targets/path_target.o
 	mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) -o $@ $<
+
+$(BUILD)/priv-target: $(BUILD)/tests/targets/priv_target.o
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $<
+
+$(BUILD)/test-privilege: $(BUILD)/tests/unit/test_privilege.o $(BUILD)/src/core/privilege.o
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $^
 
 $(BUILD)/test-schedule: \
 	$(BUILD)/tests/unit/test_schedule.o \
