@@ -6,6 +6,7 @@ Le format est inspiré de Keep a Changelog. Les versions suivent Semantic Versio
 
 ### Added
 
+- Corpus en répertoire, minimisation des crashs, et débit `execs` / `rate`.
 - Campagne à trois mutateurs, graine `--seed` reproductible, et un fichier de crash par signal.
 - Délai mural configurable, écriture non bloquante vers la cible, et résultats `clean`, `crash`, `timeout`, `error`.
 - Structure Git Flow et workflows CI : build, test, lint, security.

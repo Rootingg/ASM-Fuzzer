@@ -19,11 +19,19 @@
 %define SYS_setpgid 109
 %define SYS_setrlimit 160
 %define SYS_clock_gettime 228
+%define SYS_getdents64 217
 %define SYS_openat 257
+%define SYS_newfstatat 262
 %define SYS_pidfd_open 434
 
 %define AT_FDCWD -100
 %define O_RDONLY 0
+%define O_DIRECTORY 0x10000
+%define ENOTDIR -20
+%define DT_UNKNOWN 0
+%define DT_REG 8
+%define S_IFMT 0xF000
+%define S_IFREG 0x8000
 %define O_WRONLY 1
 %define O_CREAT 64
 %define O_TRUNC 512

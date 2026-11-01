@@ -29,7 +29,7 @@ make test
     --output crashes --timeout 1000 --iterations 1000 --seed 1 --no-stop-on-crash
 ```
 
-Le programme écrit `clean`, `crash`, `timeout` ou `error`. Il se termine avec le code 0, 2, 3 ou 1. `--stop-on-crash` est le défaut : la première faute est écrite dans le fichier `--output` et la campagne s'arrête. Sans cet arrêt, `--output` est un répertoire et chaque signal n'y est enregistré qu'une fois. La feuille de route est dans [docs/roadmap.md](docs/roadmap.md).
+Le programme écrit `clean`, `crash`, `timeout` ou `error`, puis `execs` et `rate`. Il se termine avec le code 0, 2, 3 ou 1. `--input` accepte un fichier ou un répertoire de graines. `--stop-on-crash` est le défaut : la première faute minimisée est écrite dans le fichier `--output` et la campagne s'arrête. Sans cet arrêt, `--output` est un répertoire et chaque signal n'y est enregistré qu'une fois. La feuille de route est dans [docs/roadmap.md](docs/roadmap.md).
 
 ## Vérifications
 

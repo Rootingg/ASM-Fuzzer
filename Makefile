@@ -21,6 +21,8 @@ FUZZER_OBJS := \
 	$(BUILD)/src/mutators/arithmetic.o \
 	$(BUILD)/src/mutators/schedule.o \
 	$(BUILD)/src/corpus/loader.o \
+	$(BUILD)/src/corpus/directory.o \
+	$(BUILD)/src/corpus/minimize.o \
 	$(BUILD)/src/reporting/crash.o \
 	$(BUILD)/src/reporting/path.o \
 	$(BUILD)/src/utils/syscalls.o \
@@ -38,6 +40,7 @@ tools: \
 	$(BUILD)/stall-target \
 	$(BUILD)/block-read-target \
 	$(BUILD)/multi-target \
+	$(BUILD)/shrink-target \
 	$(BUILD)/test-mutators \
 	$(BUILD)/test-memory \
 	$(BUILD)/test-signals \
@@ -64,6 +67,10 @@ $(BUILD)/block-read-target: $(BUILD)/tests/targets/block_read_target.o
 	$(LD) $(LDFLAGS) -o $@ $<
 
 $(BUILD)/multi-target: $(BUILD)/tests/targets/multi_target.o
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $<
+
+$(BUILD)/shrink-target: $(BUILD)/tests/targets/shrink_target.o
 	mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) -o $@ $<
 

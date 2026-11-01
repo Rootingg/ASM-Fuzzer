@@ -5,7 +5,9 @@ ASM-Fuzzer est un binaire statique, sans libc. Chaque module est une unité NASM
 ```text
 main
   corpus_load        lit une entrée, tronquée à 131072 octets
+  corpus             un fichier ou un répertoire de graines, trié
   fuzz_campaign      une mutation par essai, puis l'exécution
+  minimize_input     préfixe le plus court, puis suppression d'octets
     mem_copy
     apply_mutation   bitflip, byteflip ou arithmétique
     execute_target   pipe non bloquant, fork, execve, timeout, wait4
@@ -17,7 +19,11 @@ main
 
 Chaque essai recopie le corpus et applique une seule mutation. Sans `--seed`, l'essai `n` inverse le bit `n` tant que ce bit existe, puis enchaîne byteflip et des pas arithmétiques `+1` / `-1`. Avec `--seed`, un xorshift64 choisit le mutateur, l'index et le pas. La même graine refait la même série.
 
-`--stop-on-crash` est le défaut : le premier fault est écrit tel quel dans le chemin `--output` et la campagne s'arrête. `--no-stop-on-crash` traite `--output` comme un répertoire déjà créé et y écrit `sig<signal>-<essai>`, une fois par signal. Le statut `wait4` ne donne pas d'adresse de faute, donc la déduplication s'arrête au numéro de signal.
+`--input` peut être un fichier ou un répertoire. Les fichiers réguliers du répertoire sont triés par nom et chacun reçoit la campagne. Le masque de signaux est commun à toutes les graines.
+
+Avant d'écrire un crash, le fuzzer cherche le plus court préfixe qui reproduit le même signal, puis retire jusqu'à 32 octets inutiles. `--stop-on-crash` est le défaut : le premier fault minimisé est écrit dans le fichier `--output` et les graines suivantes ne sont pas lancées. `--no-stop-on-crash` traite `--output` comme un répertoire déjà créé et y écrit `sig<signal>-<essai>`, une fois par signal. Le statut `wait4` ne donne pas d'adresse de faute, donc la déduplication s'arrête au numéro de signal.
+
+La sortie compte les exécutions, y compris celles de la minimisation, et le débit en exécutions par seconde.
 
 Le nombre d'essais est `--iterations`, y compris au-delà du voisinage des bits du corpus. La valeur par défaut reste 64.
 
