@@ -6,6 +6,10 @@
 %include "constants.inc"
 %include "syscalls.inc"
 
+section .data
+global exec_count
+exec_count: dq 0
+
 section .text
 extern sys_pipe
 extern sys_fork
@@ -64,6 +68,7 @@ execute_target:
     je .child
 
     mov r15, rax
+    inc qword [rel exec_count]
     mov edi, [rsp]
     call sys_close
     mov dword [rsp], -1

@@ -23,9 +23,11 @@ Présent sur `develop`. Le tag attend une branche `release/*`.
 
 ## v0.3.0 — Corpus
 
-- Plusieurs graines.
-- Minimiser les entrées qui fautent.
-- Compter les exécutions par seconde.
+Présent sur `develop`. Le tag attend une branche `release/*`.
+
+- Un répertoire passé à `--input` fournit plusieurs graines, dans l'ordre des noms.
+- Chaque crash est réduit au plus court préfixe, puis à des octets retirés.
+- `execs` et `rate` comptent les exécutions par seconde.
 
 ## v0.4.0 — Guidé par la couverture
 

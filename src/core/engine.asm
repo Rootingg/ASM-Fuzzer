@@ -11,6 +11,7 @@ extern apply_mutation
 extern execute_target
 extern crash_save
 extern crash_name
+extern minimize_input
 global fuzz_campaign
 
 ; fuzz_campaign - run one campaign.
@@ -25,6 +26,8 @@ global fuzz_campaign
 ;        +56 stop on crash (1 or 0)
 ;        +64 RNG seed (0 selects the deterministic schedule)
 ;        +72 path buffer for crash filenames
+;        +80 signal mask, updated in place
+;        +88 work buffer used to minimize a crash
 ; OUT: rax EXIT_OK, EXIT_CRASH, EXIT_TIMEOUT, or -1
 fuzz_campaign:
     push rbx
@@ -44,19 +47,24 @@ fuzz_campaign:
     mov rdx, [rdi + 56]
     mov r8, [rdi + 64]
     mov r9, [rdi + 72]
+    mov r10, [rdi + 80]
+    mov r11, [rdi + 88]
+    mov rbp, rdi
     test rcx, rcx
     jz .bad
 
-    sub rsp, 80
+    sub rsp, 112
     mov qword [rsp], 0
     mov [rsp + 8], rcx
     mov [rsp + 16], rax
     mov [rsp + 24], rdx
     mov qword [rsp + 32], 0
     mov qword [rsp + 40], 0
-    mov qword [rsp + 48], 0
+    mov [rsp + 48], r10
     mov [rsp + 56], r8
     mov [rsp + 72], r9
+    mov [rsp + 80], r11
+    mov [rsp + 88], rbp
 
 .loop:
     mov rax, [rsp]
@@ -124,8 +132,19 @@ fuzz_campaign:
 .save_file:
     mov rdi, r15
 .write_crash:
+    mov [rsp + 96], rdi
+    mov eax, [rsp + 64]
+    and eax, 0x7f
+    mov rdi, rbx
     mov rsi, r14
     mov rdx, r13
+    mov rcx, [rsp + 16]
+    mov r8d, eax
+    mov r9, [rsp + 80]
+    call minimize_input
+    mov rdx, rax
+    mov rdi, [rsp + 96]
+    mov rsi, r14
     call crash_save
     test rax, rax
     jnz .bad_stack
@@ -154,7 +173,10 @@ fuzz_campaign:
 .bad_stack:
     mov rax, -1
 .leave_stack:
-    add rsp, 80
+    mov rdi, [rsp + 88]
+    mov rcx, [rsp + 48]
+    mov [rdi + 80], rcx
+    add rsp, 112
     jmp .leave
 .bad:
     mov rax, -1

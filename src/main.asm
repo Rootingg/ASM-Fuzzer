@@ -20,6 +20,11 @@ cfg_iterations: resq 1
 cfg_stop: resq 1
 cfg_seed: resq 1
 path_buf: resb 512
+work_buf: resb MAX_INPUT
+seed_names: resb MAX_SEEDS * SEED_NAME
+signal_mask: resq 1
+start_ms: resq 1
+aggregate: resq 1
 
 section .rodata
 msg_usage: db "usage: asm-fuzzer TARGET CORPUS OUTPUT", 10
@@ -35,6 +40,11 @@ msg_timeout: db "timeout", 10
 msg_timeout_len equ $ - msg_timeout
 msg_error: db "error", 10
 msg_error_len equ $ - msg_error
+msg_execs: db "execs ", 0
+msg_execs_len equ $ - msg_execs - 1
+msg_rate: db "rate ", 0
+msg_rate_len equ $ - msg_rate - 1
+msg_nl: db 10
 opt_target: db "--target", 0
 opt_input: db "--input", 0
 opt_output: db "--output", 0
@@ -46,7 +56,13 @@ opt_nostop: db "--no-stop-on-crash", 0
 
 section .text
 extern corpus_load
+extern corpus_open_dir
+extern corpus_collect
+extern join_path
 extern fuzz_campaign
+extern sys_close
+extern sys_monotonic_ms
+extern exec_count
 global _start
 
 _start:
@@ -184,15 +200,138 @@ _start:
     test rax, rax
     jz .usage
 
+    call sys_monotonic_ms
+    mov [rel start_ms], rax
+    call dispatch_inputs
+    mov r15, rax
+    cmp r15, EXIT_CRASH
+    je .crash
+    cmp r15, EXIT_TIMEOUT
+    je .timeout
+    cmp r15, EXIT_OK
+    jne .error
+
+    mov rdi, 1
+    lea rsi, [rel msg_clean]
+    mov rdx, msg_clean_len
+    call write_out
+    call emit_stats
+    EXIT EXIT_OK
+
+.crash:
+    mov rdi, 1
+    lea rsi, [rel msg_crash]
+    mov rdx, msg_crash_len
+    call write_out
+    call emit_stats
+    EXIT EXIT_CRASH
+
+.timeout:
+    mov rdi, 1
+    lea rsi, [rel msg_timeout]
+    mov rdx, msg_timeout_len
+    call write_out
+    call emit_stats
+    EXIT EXIT_TIMEOUT
+
+.usage:
+    mov rdi, 2
+    lea rsi, [rel msg_usage]
+    mov rdx, msg_usage_len
+    call write_out
+    EXIT EXIT_ERROR
+
+.error:
+    mov rdi, 2
+    lea rsi, [rel msg_error]
+    mov rdx, msg_error_len
+    call write_out
+    call emit_stats
+    EXIT EXIT_ERROR
+
+; dispatch_inputs - run every seed file, or the single input file.
+; OUT: rax campaign result
+dispatch_inputs:
+    push rbx
+    push r12
+    push r13
+    mov qword [rel signal_mask], 0
+    mov qword [rel aggregate], EXIT_OK
+    mov rdi, [rel cfg_input]
+    call corpus_open_dir
+    cmp rax, 0
+    jge .directory
+    cmp rax, ENOTDIR
+    jne .fail
     mov rdi, [rel cfg_input]
     lea rsi, [rel input_buf]
     mov rdx, MAX_INPUT
     call corpus_load
     cmp rax, 0
-    js .error
+    js .fail
     mov rbx, rax
+    call one_campaign
+    jmp .leave
 
-    sub rsp, 80
+.directory:
+    mov ebx, eax
+    mov edi, ebx
+    lea rsi, [rel seed_names]
+    mov rdx, MAX_SEEDS
+    mov rcx, SEED_NAME
+    call corpus_collect
+    mov r12, rax
+    mov edi, ebx
+    call sys_close
+    cmp r12, 0
+    jle .fail
+    xor r13, r13
+.seed_loop:
+    cmp r13, r12
+    jae .done
+    mov rdi, [rel cfg_input]
+    mov rax, r13
+    imul rax, SEED_NAME
+    lea rsi, [rel seed_names]
+    add rsi, rax
+    lea rdx, [rel path_buf]
+    mov rcx, 512
+    call join_path
+    test rax, rax
+    jnz .fail
+    lea rdi, [rel path_buf]
+    lea rsi, [rel input_buf]
+    mov rdx, MAX_INPUT
+    call corpus_load
+    cmp rax, 0
+    js .fail
+    mov rbx, rax
+    call one_campaign
+    cmp rax, 0
+    jl .fail
+    cmp rax, EXIT_CRASH
+    jne .next_seed
+    cmp qword [rel cfg_stop], 0
+    jne .done
+.next_seed:
+    inc r13
+    jmp .seed_loop
+.done:
+    mov rax, [rel aggregate]
+    jmp .leave
+.fail:
+    mov rax, -1
+.leave:
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+; one_campaign - fuzz the buffer currently loaded.
+; IN:  rbx length
+; OUT: rax campaign result, aggregate updated
+one_campaign:
+    sub rsp, 96
     mov rax, [rel cfg_target]
     mov [rsp], rax
     lea rax, [rel input_buf]
@@ -212,50 +351,100 @@ _start:
     mov [rsp + 64], rax
     lea rax, [rel path_buf]
     mov [rsp + 72], rax
+    mov rax, [rel signal_mask]
+    mov [rsp + 80], rax
+    lea rax, [rel work_buf]
+    mov [rsp + 88], rax
     mov rdi, rsp
     call fuzz_campaign
-    add rsp, 80
-
+    mov rcx, [rsp + 80]
+    mov [rel signal_mask], rcx
+    add rsp, 96
     cmp rax, EXIT_CRASH
-    je .crash
+    jne .check_timeout
+    mov qword [rel aggregate], EXIT_CRASH
+    ret
+.check_timeout:
     cmp rax, EXIT_TIMEOUT
-    je .timeout
-    cmp rax, EXIT_OK
-    jne .error
+    jne .check_ok
+    cmp qword [rel aggregate], EXIT_CRASH
+    je .keep
+    mov qword [rel aggregate], EXIT_TIMEOUT
+.keep:
+    ret
+.check_ok:
+    ret
 
+; emit_stats - print the execution count and the wall-clock rate.
+emit_stats:
     mov rdi, 1
-    lea rsi, [rel msg_clean]
-    mov rdx, msg_clean_len
+    lea rsi, [rel msg_execs]
+    mov rdx, msg_execs_len
     call write_out
-    EXIT EXIT_OK
-
-.crash:
+    mov rdi, [rel exec_count]
+    call print_u64
     mov rdi, 1
-    lea rsi, [rel msg_crash]
-    mov rdx, msg_crash_len
+    lea rsi, [rel msg_nl]
+    mov rdx, 1
     call write_out
-    EXIT EXIT_CRASH
-
-.timeout:
     mov rdi, 1
-    lea rsi, [rel msg_timeout]
-    mov rdx, msg_timeout_len
+    lea rsi, [rel msg_rate]
+    mov rdx, msg_rate_len
     call write_out
-    EXIT EXIT_TIMEOUT
+    call current_rate
+    mov rdi, rax
+    call print_u64
+    mov rdi, 1
+    lea rsi, [rel msg_nl]
+    mov rdx, 1
+    call write_out
+    ret
 
-.usage:
-    mov rdi, 2
-    lea rsi, [rel msg_usage]
-    mov rdx, msg_usage_len
-    call write_out
-    EXIT EXIT_ERROR
+; current_rate - executions per second, or 0 when the clock did not advance.
+; OUT: rax rate
+current_rate:
+    call sys_monotonic_ms
+    cmp rax, 0
+    jl .zero
+    sub rax, [rel start_ms]
+    jbe .zero
+    mov rcx, rax
+    mov rax, [rel exec_count]
+    mov r8, 1000
+    mul r8
+    test rdx, rdx
+    jnz .zero
+    div rcx
+    ret
+.zero:
+    xor eax, eax
+    ret
 
-.error:
-    mov rdi, 2
-    lea rsi, [rel msg_error]
-    mov rdx, msg_error_len
+; print_u64 - write an unsigned decimal value to stdout.
+; IN:  rdi value
+print_u64:
+    push rbx
+    sub rsp, 32
+    mov rax, rdi
+    lea rcx, [rsp + 32]
+.digits:
+    xor edx, edx
+    mov r8, 10
+    div r8
+    add dl, "0"
+    dec rcx
+    mov [rcx], dl
+    test rax, rax
+    jnz .digits
+    lea rbx, [rsp + 32]
+    sub rbx, rcx
+    mov rdi, 1
+    mov rsi, rcx
+    mov rdx, rbx
     call write_out
-    EXIT EXIT_ERROR
+    add rsp, 32
+    pop rbx
+    ret
 
 ; take_value - consume the next argv string.
 ; IN:  r12 argv, r13 current index, rbx argc
