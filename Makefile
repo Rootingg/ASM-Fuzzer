@@ -2,9 +2,10 @@
 
 NASM      ?= nasm
 LD        ?= ld
-# reloc-rel-dword flags every call into another object. That relocation is the
-# normal ELF64 pc-relative call, so it stays visible without failing the build.
-NASMFLAGS := -f elf64 -g -F dwarf -I include/ -w+all -w+error -w-reloc-rel-dword
+# NASM 2.16.03 warns on every cross-object call. Ubuntu 24.04 ships an older
+# NASM that rejects the warning name, so the suppression is probed first.
+NASM_RELOC := $(shell src=$$(mktemp); out=$$(mktemp); printf 'bits 64\nnop\n' > $$src; if $(NASM) -f elf64 -w-reloc-rel-dword -o $$out $$src >/dev/null 2>&1; then echo -w-reloc-rel-dword; fi; rm -f $$src $$out)
+NASMFLAGS := -f elf64 -g -F dwarf -I include/ -w+all -w+error $(NASM_RELOC)
 LDFLAGS   := -z noexecstack
 BUILD     ?= build
 

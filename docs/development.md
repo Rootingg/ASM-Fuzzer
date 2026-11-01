@@ -20,7 +20,7 @@ make BUILD=/tmp/asm-fuzzer-build test
 - Les fonctions suivent l'ABI System V : les arguments dans `rdi`, `rsi`, `rdx`, `rcx`, `r8`, `r9`, le retour dans `rax`.
 - Les wrappers de syscall placent le quatrième argument dans `r10`.
 - Instructions en minuscules, indentation de 4 espaces, commentaires en anglais.
-- `-w+all -w+error` est actif. Un warning casse `make lint` et le build. L'avertissement `reloc-rel-dword` est désactivé : NASM 2.16 le lève sur chaque `call` vers un autre objet, alors que cette relocalisation PC-relative est le mode normal d'ELF64.
+- `-w+all -w+error` est actif. Un warning casse `make lint` et le build. Si NASM connait `reloc-rel-dword`, cet avertissement est désactivé : les versions récentes le lèvent sur chaque `call` vers un autre objet, alors que cette relocalisation PC-relative est le mode normal d'ELF64. Le NASM d'Ubuntu 24.04 ignore ce nom.
 
 ## Ajouter un mutateur
 

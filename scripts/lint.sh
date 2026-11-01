@@ -33,12 +33,18 @@ done < <(find . -type f \
     \( -name '*.asm' -o -name '*.inc' -o -name '*.sh' -o -name '*.yml' -o -name '*.md' \
        -o -name 'Makefile' -o -name '.editorconfig' -o -name '.gitattributes' -o -name '.gitignore' \))
 
+nasm_flags=(-f elf64 -I include/ -w+all -w+error)
+printf 'bits 64\nnop\n' > "$tmp/probe.asm"
+if nasm -f elf64 -w-reloc-rel-dword -o "$tmp/probe.o" "$tmp/probe.asm" >/dev/null 2>&1; then
+    nasm_flags+=(-w-reloc-rel-dword)
+fi
+
 shopt -s globstar nullglob
 for file in **/*.asm; do
     if [[ "$file" == build/* ]]; then
         continue
     fi
-    if ! nasm -f elf64 -I include/ -w+all -w+error -w-reloc-rel-dword "$file" -o "$tmp/lint.o"; then
+    if ! nasm "${nasm_flags[@]}" "$file" -o "$tmp/lint.o"; then
         note "assembly failed: $file"
     fi
 done
