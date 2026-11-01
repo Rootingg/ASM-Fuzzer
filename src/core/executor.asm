@@ -29,6 +29,9 @@ extern sys_poll
 extern sys_monotonic_ms
 extern sys_nanosleep_ms
 extern classify_wait_status
+extern coverage_reset
+extern coverage_drain
+extern coverage_commit
 global execute_target
 
 ; execute_target - execute a program once.
@@ -51,16 +54,26 @@ execute_target:
     jnz .have_timeout
     mov r14, DEFAULT_TIMEOUT_MS
 .have_timeout:
-    sub rsp, 80
+    sub rsp, 96
     mov [rsp + 72], r8
     mov dword [rsp], -1
     mov dword [rsp + 4], -1
     mov dword [rsp + 12], -1
+    mov dword [rsp + 80], -1
+    mov dword [rsp + 84], -1
+    call coverage_reset
 
     mov rdi, rsp
     call sys_pipe
     test rax, rax
     js .fail
+    lea rdi, [rsp + 80]
+    call sys_pipe
+    test rax, rax
+    jns .have_cov
+    mov dword [rsp + 80], -1
+    mov dword [rsp + 84], -1
+.have_cov:
 
     call sys_fork
     cmp rax, 0
@@ -102,6 +115,24 @@ execute_target:
     call sys_pidfd_open
     mov [rsp + 12], eax
 
+    mov edi, [rsp + 84]
+    cmp edi, 0
+    jl .cov_ready
+    call sys_close
+    mov dword [rsp + 84], -1
+    mov edi, [rsp + 80]
+    mov esi, F_GETFL
+    xor edx, edx
+    call sys_fcntl
+    cmp rax, 0
+    jl .cov_ready
+    mov edx, eax
+    or edx, O_NONBLOCK
+    mov edi, [rsp + 80]
+    mov esi, F_SETFL
+    call sys_fcntl
+.cov_ready:
+
     call sys_monotonic_ms
     cmp rax, 0
     jl .kill_fail
@@ -110,6 +141,8 @@ execute_target:
     mov qword [rsp + 16], 0
 
 .supervise:
+    mov edi, [rsp + 80]
+    call coverage_drain
     mov rax, [rsp + 16]
     cmp rax, r13
     jae .finish_write
@@ -198,6 +231,9 @@ execute_target:
     jmp .supervise
 
 .classify:
+    mov edi, [rsp + 80]
+    call coverage_drain
+    call coverage_commit
     mov r11, [rsp + 72]
     test r11, r11
     jz .classify_call
@@ -223,6 +259,9 @@ execute_target:
     call sys_wait4
     cmp rax, EINTR
     je .reap_timeout
+    mov edi, [rsp + 80]
+    call coverage_drain
+    call coverage_commit
     mov r11, [rsp + 72]
     test r11, r11
     jz .timeout_code
@@ -269,7 +308,39 @@ execute_target:
     jl .child_fail
     mov edi, [rsp]
     test edi, edi
-    jz .limits
+    jz .cov_child
+    call sys_close
+
+.cov_child:
+    mov edi, [rsp + 84]
+    cmp edi, 0
+    jl .limits
+    mov esi, COV_FD
+    call sys_dup2
+    cmp rax, 0
+    jl .cov_close
+    mov edi, COV_FD
+    mov esi, F_GETFL
+    xor edx, edx
+    call sys_fcntl
+    cmp rax, 0
+    jl .cov_close
+    mov edx, eax
+    or edx, O_NONBLOCK
+    mov edi, COV_FD
+    mov esi, F_SETFL
+    call sys_fcntl
+.cov_close:
+    mov edi, [rsp + 80]
+    cmp edi, 0
+    jl .cov_close_write
+    call sys_close
+.cov_close_write:
+    mov edi, [rsp + 84]
+    cmp edi, COV_FD
+    je .limits
+    cmp edi, 0
+    jl .limits
     call sys_close
 
 .limits:
@@ -318,11 +389,21 @@ execute_target:
 .close_pidfd:
     mov edi, [rsp + 12]
     cmp edi, 0
+    jl .close_cov_read
+    call sys_close
+.close_cov_read:
+    mov edi, [rsp + 80]
+    cmp edi, 0
+    jl .close_cov_write
+    call sys_close
+.close_cov_write:
+    mov edi, [rsp + 84]
+    cmp edi, 0
     jl .restore
     call sys_close
 .restore:
     mov rax, rbp
-    add rsp, 80
+    add rsp, 96
 .leave:
     pop r15
     pop r14

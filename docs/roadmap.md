@@ -31,7 +31,11 @@ Présent sur `develop`. Le tag attend une branche `release/*`.
 
 ## v0.4.0 — Guidé par la couverture
 
-Instrumentation légère, ou un autre signal de couverture, pour favoriser les mutations qui ouvrent un chemin nouveau.
+Présent sur `develop`. Le tag attend une branche `release/*`.
+
+- Les cibles instrumentées marquent des arêtes sur le descripteur 3.
+- Une entrée qui ouvre une arête nouvelle est reprise comme base des mutations suivantes.
+- `edges` compte les arêtes distinctes. Les cibles non instrumentées restent inchangées.
 
 ## v1.0.0 — Première version mature
 

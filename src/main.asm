@@ -44,6 +44,8 @@ msg_execs: db "execs ", 0
 msg_execs_len equ $ - msg_execs - 1
 msg_rate: db "rate ", 0
 msg_rate_len equ $ - msg_rate - 1
+msg_edges: db "edges ", 0
+msg_edges_len equ $ - msg_edges - 1
 msg_nl: db 10
 opt_target: db "--target", 0
 opt_input: db "--input", 0
@@ -63,6 +65,7 @@ extern fuzz_campaign
 extern sys_close
 extern sys_monotonic_ms
 extern exec_count
+extern coverage_total
 global _start
 
 _start:
@@ -393,6 +396,16 @@ emit_stats:
     call write_out
     call current_rate
     mov rdi, rax
+    call print_u64
+    mov rdi, 1
+    lea rsi, [rel msg_nl]
+    mov rdx, 1
+    call write_out
+    mov rdi, 1
+    lea rsi, [rel msg_edges]
+    mov rdx, msg_edges_len
+    call write_out
+    mov rdi, [rel coverage_total]
     call print_u64
     mov rdi, 1
     lea rsi, [rel msg_nl]
