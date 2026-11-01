@@ -6,6 +6,7 @@ Le format est inspiré de Keep a Changelog. Les versions suivent Semantic Versio
 
 ### Added
 
+- Campagne à trois mutateurs, graine `--seed` reproductible, et un fichier de crash par signal.
 - Délai mural configurable, écriture non bloquante vers la cible, et résultats `clean`, `crash`, `timeout`, `error`.
 - Structure Git Flow et workflows CI : build, test, lint, security.
 - Squelette NASM : campagne bitflip, exécution sans shell, écriture d'un crash reproductible.

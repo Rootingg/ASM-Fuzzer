@@ -19,10 +19,13 @@ FUZZER_OBJS := \
 	$(BUILD)/src/mutators/bitflip.o \
 	$(BUILD)/src/mutators/byteflip.o \
 	$(BUILD)/src/mutators/arithmetic.o \
+	$(BUILD)/src/mutators/schedule.o \
 	$(BUILD)/src/corpus/loader.o \
 	$(BUILD)/src/reporting/crash.o \
+	$(BUILD)/src/reporting/path.o \
 	$(BUILD)/src/utils/syscalls.o \
-	$(BUILD)/src/utils/memory.o
+	$(BUILD)/src/utils/memory.o \
+	$(BUILD)/src/utils/prng.o
 
 .PHONY: all tools test lint security clean
 
@@ -34,9 +37,11 @@ tools: \
 	$(BUILD)/spin-target \
 	$(BUILD)/stall-target \
 	$(BUILD)/block-read-target \
+	$(BUILD)/multi-target \
 	$(BUILD)/test-mutators \
 	$(BUILD)/test-memory \
-	$(BUILD)/test-signals
+	$(BUILD)/test-signals \
+	$(BUILD)/test-schedule
 
 $(BUILD)/asm-fuzzer: $(FUZZER_OBJS)
 	mkdir -p $(dir $@)
@@ -57,6 +62,20 @@ $(BUILD)/stall-target: $(BUILD)/tests/targets/stall_target.o
 $(BUILD)/block-read-target: $(BUILD)/tests/targets/block_read_target.o
 	mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) -o $@ $<
+
+$(BUILD)/multi-target: $(BUILD)/tests/targets/multi_target.o
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $<
+
+$(BUILD)/test-schedule: \
+	$(BUILD)/tests/unit/test_schedule.o \
+	$(BUILD)/src/mutators/schedule.o \
+	$(BUILD)/src/mutators/bitflip.o \
+	$(BUILD)/src/mutators/byteflip.o \
+	$(BUILD)/src/mutators/arithmetic.o \
+	$(BUILD)/src/utils/prng.o
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $^
 
 $(BUILD)/test-mutators: \
 	$(BUILD)/tests/unit/test_mutators.o \
