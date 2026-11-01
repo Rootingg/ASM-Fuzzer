@@ -13,6 +13,14 @@ global sys_execve
 global sys_setrlimit
 global sys_ignore_sigpipe
 global sys_exit
+global sys_write
+global sys_fcntl
+global sys_kill
+global sys_setpgid
+global sys_pidfd_open
+global sys_poll
+global sys_monotonic_ms
+global sys_nanosleep_ms
 global read_all
 global write_all
 
@@ -99,6 +107,95 @@ sys_ignore_sigpipe:
     mov r10, SIGSET_SIZE
     syscall
     add rsp, 32
+    ret
+
+; sys_write - one write syscall. A short count is not retried here.
+; IN:  rdi fd, rsi buffer, rdx length
+; OUT: rax bytes written, or a negative errno
+sys_write:
+    mov rax, SYS_write
+    syscall
+    ret
+
+; sys_fcntl - fcntl(fd, cmd, arg). The third argument stays in rdx.
+; IN:  rdi fd, rsi command, rdx argument
+; OUT: rax command result, or a negative errno
+sys_fcntl:
+    mov rax, SYS_fcntl
+    syscall
+    ret
+
+; sys_kill - send a signal. A negative pid addresses the process group.
+; IN:  rdi pid, rsi signal
+; OUT: rax 0, or a negative errno
+sys_kill:
+    mov rax, SYS_kill
+    syscall
+    ret
+
+; sys_setpgid - set the process group.
+; IN:  rdi pid, rsi pgid
+; OUT: rax 0, or a negative errno
+sys_setpgid:
+    mov rax, SYS_setpgid
+    syscall
+    ret
+
+; sys_pidfd_open - open a pidfd so poll can wait for process exit.
+; IN:  rdi pid, rsi flags
+; OUT: rax pidfd, or a negative errno
+sys_pidfd_open:
+    mov rax, SYS_pidfd_open
+    syscall
+    ret
+
+; sys_poll - wait for file descriptors or a timeout.
+; IN:  rdi pollfd array, rsi count, rdx timeout in milliseconds
+; OUT: rax ready count, or a negative errno
+sys_poll:
+    mov rax, SYS_poll
+    syscall
+    ret
+
+; sys_monotonic_ms - CLOCK_MONOTONIC converted to milliseconds.
+; OUT: rax milliseconds, or a negative errno
+sys_monotonic_ms:
+    sub rsp, 16
+    mov rax, SYS_clock_gettime
+    mov edi, CLOCK_MONOTONIC
+    mov rsi, rsp
+    syscall
+    test rax, rax
+    js .fail
+    mov rcx, [rsp]
+    mov rax, [rsp + 8]
+    xor edx, edx
+    mov r8, 1000000
+    div r8
+    imul rcx, rcx, 1000
+    add rax, rcx
+    jmp .leave
+.fail:
+.leave:
+    add rsp, 16
+    ret
+
+; sys_nanosleep_ms - sleep up to rdi milliseconds. Interrupted sleeps return early.
+; IN:  rdi milliseconds
+sys_nanosleep_ms:
+    sub rsp, 16
+    mov rax, rdi
+    xor edx, edx
+    mov ecx, 1000
+    div rcx
+    mov [rsp], rax
+    imul rdx, rdx, 1000000
+    mov [rsp + 8], rdx
+    mov rax, SYS_nanosleep
+    mov rdi, rsp
+    xor esi, esi
+    syscall
+    add rsp, 16
     ret
 
 ; sys_exit - terminate this process. Does not return.

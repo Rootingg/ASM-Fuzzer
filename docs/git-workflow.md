@@ -8,8 +8,8 @@ Deux branches permanentes :
 | `develop` | Intégration | Forte |
 | `feature/*` | Nouvelles fonctionnalités | CI obligatoire avant intégration, force-push bloqué |
 | `fix/*` | Corrections en développement | CI obligatoire avant intégration, force-push bloqué |
-| `release/*` | Préparation d'une version | Suppression et force-push bloqués |
-| `hotfix/*` | Correction urgente de production | Suppression et force-push bloqués |
+| `release/*` | Préparation d'une version | Force-push bloqué, suppression autorisée après les merges |
+| `hotfix/*` | Correction urgente de production | Force-push bloqué, suppression autorisée après les merges |
 
 ```text
 feature/*  -->  PR  -->  develop
@@ -37,9 +37,11 @@ Les hotfixes partent de `main`, puis reviennent dans `main` et dans `develop`.
 
 Le merge commit conserve la branche de fonctionnalité dans l'historique. L'historique linéaire est incompatible avec ce choix : il n'est pas exigé.
 
-## Rulesets
+## Rulesets actifs
 
-Les règles sont actives, sans acteur autorisé à les contourner.
+Ce qui suit est la configuration réellement appliquée par les rulesets GitHub du dépôt, pas seulement une convention. Un changement de document sans mise à jour du ruleset ne protège rien. On vérifie l'état dans Settings → Rules → Rulesets, ou avec l'API `GET /repos/Rootingg/ASM-Fuzzer/rulesets`.
+
+Les quatre rulesets sont actifs et n'ont aucun acteur autorisé à les contourner.
 
 `main` et `develop` :
 
@@ -48,13 +50,14 @@ Les règles sont actives, sans acteur autorisé à les contourner.
 - pull request obligatoire, sans approbation humaine tant qu'un seul mainteneur ne peut pas approuver sa propre PR ;
 - checks `build`, `test`, `lint` et `security` obligatoires ;
 - conversations de review résolues ;
-- approbations périmées écartées.
+- approbations périmées écartées ;
+- seule la méthode merge est acceptée.
 
-`main` exige en plus que la branche soit à jour avec sa base.
+`main` exige en plus que la branche soit à jour avec sa base avant la fusion. `develop` ne l'exige pas.
 
 `feature/*` et `fix/*` interdisent le force-push et laissent la suppression, pour que GitHub puisse effacer la branche après le merge.
 
-`release/*` et `hotfix/*` interdisent le force-push et la suppression. Il faut synchroniser vers `develop` avant de supprimer la branche à la main. La suppression automatique échoue sur ces branches, et le merge vers `main` reste valable.
+`release/*` et `hotfix/*` interdisent le force-push et autorisent la suppression. L'ordre de travail est : merger vers `main`, synchroniser vers `develop`, puis supprimer la branche. Si la suppression automatique efface `release/*` dès le merge vers `main`, la synchronisation se fait par une PR de `main` vers `develop`. Il n'y a pas besoin de désactiver une règle pour effacer la branche.
 
 ## Volontairement reporté
 

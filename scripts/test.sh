@@ -10,3 +10,4 @@ export BUILD="${BUILD:-build}"
 make tools
 bash "$root/scripts/run-units.sh"
 bash "$root/tests/integration/campaign.sh"
+bash "$root/tests/integration/timeouts.sh"

@@ -6,6 +6,7 @@
 
 section .text
 extern wait_status_is_crash
+extern classify_wait_status
 global _start
 
 _start:
@@ -43,6 +44,31 @@ _start:
     call wait_status_is_crash
     test eax, eax
     jnz .fail
+
+    mov edi, SIGSEGV
+    call classify_wait_status
+    cmp eax, EXIT_CRASH
+    jne .fail
+
+    xor edi, edi
+    call classify_wait_status
+    cmp eax, EXIT_OK
+    jne .fail
+
+    mov edi, 0x7f00
+    call classify_wait_status
+    cmp eax, EXIT_ERROR
+    jne .fail
+
+    mov edi, SIGKILL
+    call classify_wait_status
+    cmp eax, EXIT_TIMEOUT
+    jne .fail
+
+    mov edi, SIGXCPU
+    call classify_wait_status
+    cmp eax, EXIT_TIMEOUT
+    jne .fail
 
     EXIT 0
 .fail:

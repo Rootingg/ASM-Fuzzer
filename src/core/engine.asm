@@ -1,5 +1,6 @@
-; Bootstrap campaign: each trial flips one bit of a fresh copy of the seed.
-; Trials are independent, so a saved crash is the exact input that faulted.
+; Each trial flips one bit of a fresh copy of the seed.
+; A timeout is not a crash. The first crash is saved, and the run stops there
+; unless the caller asked to continue.
 
 %include "constants.inc"
 
@@ -7,13 +8,20 @@ section .text
 extern mem_copy
 extern bitflip_apply
 extern execute_target
-extern wait_status_is_crash
 extern crash_save
 global fuzz_campaign
 
 ; fuzz_campaign - search a bounded bitflip neighbourhood of one seed.
-; IN:  rdi target path, rsi seed, rdx length, rcx scratch, r8 crash path
-; OUT: rax 0 when no fault is found, 2 when a crash file was written, -1 on error
+; IN:  rdi pointer to the campaign record:
+;        +0  target path
+;        +8  seed
+;        +16 length
+;        +24 scratch
+;        +32 crash path
+;        +40 timeout milliseconds
+;        +48 iterations
+;        +56 stop on crash (1 or 0)
+; OUT: rax EXIT_OK, EXIT_CRASH, EXIT_TIMEOUT, or -1
 fuzz_campaign:
     push rbx
     push rbp
@@ -22,78 +30,110 @@ fuzz_campaign:
     push r14
     push r15
 
-    mov rbx, rdi
-    mov r12, rsi
-    mov r13, rdx
-    mov r14, rcx
-    mov r15, r8
+    mov rbx, [rdi]
+    mov r12, [rdi + 8]
+    mov r13, [rdi + 16]
+    mov r14, [rdi + 24]
+    mov r15, [rdi + 32]
+    mov rax, [rdi + 40]
+    mov rcx, [rdi + 48]
+    mov rdx, [rdi + 56]
+    test rcx, rcx
+    jz .bad
+
+    sub rsp, 48
+    mov qword [rsp], 0
+    mov [rsp + 16], rax
+    mov [rsp + 24], rdx
+    mov qword [rsp + 32], 0
+    mov qword [rsp + 40], 0
 
     test r13, r13
-    jz .clean
+    jz .use_iterations
+    mov rax, r13
+    shl rax, 3
+    cmp rax, rcx
+    jbe .store_trials
+    mov rax, rcx
+    jmp .store_trials
+.use_iterations:
+    mov rax, rcx
+.store_trials:
+    mov [rsp + 8], rax
 
-    mov rbp, r13
-    shl rbp, 3
-    cmp rbp, CAMPAIGN_MAX_BITS
-    jbe .bits_ready
-    mov rbp, CAMPAIGN_MAX_BITS
-.bits_ready:
-    xor eax, eax
-    push rax
 .loop:
     mov rax, [rsp]
-    cmp rax, rbp
-    jae .clean_stack
+    cmp rax, [rsp + 8]
+    jae .finish
 
+    test r13, r13
+    jz .run
     mov rdi, r14
     mov rsi, r12
     mov rdx, r13
     call mem_copy
-
     mov rdi, r14
     mov rsi, r13
     mov rdx, [rsp]
     call bitflip_apply
     test rax, rax
-    jnz .error_stack
+    jnz .bad_stack
 
-    sub rsp, 16
+.run:
     mov rdi, rbx
     mov rsi, r14
     mov rdx, r13
-    mov rcx, rsp
+    mov rcx, [rsp + 16]
     call execute_target
-    mov r11d, [rsp]
-    add rsp, 16
+    cmp rax, EXIT_CRASH
+    je .on_crash
+    cmp rax, EXIT_TIMEOUT
+    je .on_timeout
     cmp rax, 0
-    js .error_stack
+    jl .bad_stack
+    jmp .next
 
-    mov edi, r11d
-    call wait_status_is_crash
-    test rax, rax
-    jnz .crash
+.on_timeout:
+    mov qword [rsp + 32], 1
+    jmp .next
 
-    inc qword [rsp]
-    jmp .loop
-
-.crash:
+.on_crash:
+    cmp qword [rsp + 40], 0
+    jne .after_save
     mov rdi, r15
     mov rsi, r14
     mov rdx, r13
     call crash_save
     test rax, rax
-    js .error_stack
-    add rsp, 8
+    jnz .bad_stack
+    mov qword [rsp + 40], 1
+.after_save:
+    cmp qword [rsp + 24], 0
+    je .next
     mov eax, EXIT_CRASH
-    jmp .leave
+    jmp .leave_stack
 
-.clean_stack:
-    add rsp, 8
-.clean:
-    xor eax, eax
-    jmp .leave
+.next:
+    inc qword [rsp]
+    jmp .loop
 
-.error_stack:
-    add rsp, 8
+.finish:
+    mov eax, EXIT_OK
+    cmp qword [rsp + 32], 0
+    je .prefer_crash
+    mov eax, EXIT_TIMEOUT
+.prefer_crash:
+    cmp qword [rsp + 40], 0
+    je .leave_stack
+    mov eax, EXIT_CRASH
+    jmp .leave_stack
+
+.bad_stack:
+    mov rax, -1
+.leave_stack:
+    add rsp, 48
+    jmp .leave
+.bad:
     mov rax, -1
 .leave:
     pop r15
