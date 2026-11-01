@@ -1,0 +1,20 @@
+name: Demande de fonctionnalité
+description: Une évolution du moteur, des mutateurs, du corpus ou du reporting.
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Besoin
+      description: Le problème que cette fonctionnalité résout.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposition
+      description: Le comportement visé, et comment le tester sans cible non fiable.
+    validations:
+      required: true
