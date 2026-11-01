@@ -13,7 +13,7 @@ Le fuzzer est un outil local. Il exécute une cible choisie par l'opérateur. Ce
 ## Hypothèses
 
 - L'opérateur a le droit de lancer la cible sur la machine où tourne le fuzzer.
-- La CI n'exécute que `demo-target`, compilé depuis les sources du dépôt.
+- La CI n'exécute que des cibles compilées depuis les sources du dépôt : `demo-target`, `spin-target`, `stall-target` et `block-read-target`.
 - Les runners GitHub hébergés ne reçoivent pas de binaire tiers.
 - Un crash d'une cible tierce n'est pas une vulnérabilité d'ASM-Fuzzer.
 
@@ -22,8 +22,10 @@ Le fuzzer est un outil local. Il exécute une cible choisie par l'opérateur. Ce
 | Menace | Mesure |
 | --- | --- |
 | Cible qui consomme le CPU ou la mémoire | `RLIMIT_CPU`, `RLIMIT_AS`, `RLIMIT_FSIZE` |
+| Cible bloquée sans consommer de CPU | Délai mural, `SIGKILL` du groupe, résultat `timeout` |
+| Parent bloqué sur un tube plein | Écriture non bloquante et `poll` |
 | Injection de shell via le chemin ou l'entrée | `execve` direct, arguments séparés |
-| Faux crash sur un timeout | `SIGKILL` et `SIGXCPU` ne sont pas des faults |
+| Faux crash sur un timeout | `SIGKILL` et `SIGXCPU` sont des timeouts, pas des crashs |
 | Secret commité ou action non épinglée | Job `security` |
 | Fuite d'un crash sensible | `crashes/` est ignoré par Git |
 

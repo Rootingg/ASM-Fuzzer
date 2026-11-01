@@ -6,6 +6,7 @@ Le format est inspiré de Keep a Changelog. Les versions suivent Semantic Versio
 
 ### Added
 
+- Délai mural configurable, écriture non bloquante vers la cible, et résultats `clean`, `crash`, `timeout`, `error`.
 - Structure Git Flow et workflows CI : build, test, lint, security.
 - Squelette NASM : campagne bitflip, exécution sans shell, écriture d'un crash reproductible.
 - Cible de démonstration contrôlée et tests d'oracle.

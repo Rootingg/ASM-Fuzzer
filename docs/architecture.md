@@ -4,12 +4,12 @@ ASM-Fuzzer est un binaire statique, sans libc. Chaque module est une unité NASM
 
 ```text
 main
-  corpus_load        lit une entrée, tronquée à 4096 octets
+  corpus_load        lit une entrée, tronquée à 131072 octets
   fuzz_campaign      essaie des voisins à un bit
     mem_copy
     bitflip_apply
-    execute_target   pipe, fork, execve, wait4
-    wait_status_is_crash
+    execute_target   pipe non bloquant, fork, execve, timeout, wait4
+    classify_wait_status
     crash_save       écrit l'entrée exacte qui a fauté
 ```
 
@@ -19,15 +19,25 @@ Le bootstrap ne pile pas les mutations. L'essai `n` recopie le corpus puis inver
 
 ## Exécution
 
-`execute_target` crée un tube, fork, puis dans l'enfant :
+`execute_target` crée un tube dont la capacité est ramenée à 4 096 octets, fork, puis dans l'enfant :
 
-1. branche le côté lecture sur l'entrée standard ;
-2. pose `RLIMIT_CPU` à 1 seconde, `RLIMIT_AS` à 64 Mio et `RLIMIT_FSIZE` à 1 Mio ;
-3. appelle `execve` avec un `argv` à un élément et un environnement vide.
+1. place l'enfant dans son propre groupe de processus ;
+2. branche le côté lecture sur l'entrée standard ;
+3. pose `RLIMIT_CPU` à 5 secondes, `RLIMIT_AS` à 64 Mio et `RLIMIT_FSIZE` à 1 Mio ;
+4. appelle `execve` avec un `argv` à un élément et un environnement vide.
 
-Le parent écrit l'entrée, ferme le tube et attend. `SIGPIPE` est ignoré dans le parent pour qu'une cible qui n'a pas tout lu renvoie `EPIPE` au lieu de tuer le fuzzer. `EINTR` est rejoué sur les lectures et écritures.
+Le parent ne dépend pas de la taille du tube. Il écrit en `O_NONBLOCK`, surveille le temps monotone, et ferme le côté écriture seulement quand toute l'entrée a été acceptée. `SIGPIPE` est ignoré pour qu'une cible qui se termine tôt renvoie `EPIPE`. Si l'écriture rendrait `EAGAIN`, le parent attend avec `poll` au lieu de bloquer. Un pidfd, quand le noyau le fournit, réveille le parent dès que l'enfant se termine.
 
-Un fault est `SIGILL`, `SIGTRAP`, `SIGABRT`, `SIGBUS`, `SIGFPE` ou `SIGSEGV`, y compris avec le bit de core dump. `SIGKILL` et `SIGXCPU` sont des limites, pas des crashs.
+Le délai par défaut est une seconde de temps réel (`--timeout`). À l'échéance, le parent envoie `SIGKILL` au groupe puis au processus, puis `wait4` récupère l'enfant. Aucun chemin d'erreur après le `fork` ne laisse un zombie.
+
+| Résultat | Signification | Code |
+| --- | --- | --- |
+| `clean` | L'enfant s'est terminé sans fault | 0 |
+| `crash` | `SIGILL`, `SIGTRAP`, `SIGABRT`, `SIGBUS`, `SIGFPE`, `SIGSEGV` | 2 |
+| `timeout` | Échéance murale, `SIGKILL` ou `SIGXCPU` | 3 |
+| `error` | Le lancement a échoué, ou l'enfant s'est terminé avec le code 127 | 1 |
+
+`RLIMIT_CPU` reste un filet. Une cible bloquée dans `read` ou `pause` ne consomme presque pas de CPU : seul le délai mural l'arrête. Ces limites ne sont pas une sandbox. L'isolation par namespace et seccomp est prévue pour une version ultérieure, voir [roadmap.md](roadmap.md).
 
 ## Cible de démonstration
 

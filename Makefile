@@ -31,6 +31,9 @@ all: $(BUILD)/asm-fuzzer
 tools: \
 	$(BUILD)/asm-fuzzer \
 	$(BUILD)/demo-target \
+	$(BUILD)/spin-target \
+	$(BUILD)/stall-target \
+	$(BUILD)/block-read-target \
 	$(BUILD)/test-mutators \
 	$(BUILD)/test-memory \
 	$(BUILD)/test-signals
@@ -40,6 +43,18 @@ $(BUILD)/asm-fuzzer: $(FUZZER_OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(FUZZER_OBJS)
 
 $(BUILD)/demo-target: $(BUILD)/tests/targets/demo_target.o
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $<
+
+$(BUILD)/spin-target: $(BUILD)/tests/targets/spin_target.o
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $<
+
+$(BUILD)/stall-target: $(BUILD)/tests/targets/stall_target.o
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $<
+
+$(BUILD)/block-read-target: $(BUILD)/tests/targets/block_read_target.o
 	mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) -o $@ $<
 

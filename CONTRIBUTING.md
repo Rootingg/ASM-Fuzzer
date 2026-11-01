@@ -46,4 +46,4 @@ Tant qu'il n'y a qu'un mainteneur, GitHub ne permet pas d'approuver sa propre PR
 
 ## Cibles
 
-Les tests n'exécutent que `tests/targets/demo_target.asm`. N'ajoute pas un binaire de provenance inconnue, ni dans le dépôt ni dans la CI.
+Les tests n'exécutent que des cibles assemblées depuis `tests/targets/`. N'ajoute pas un binaire de provenance inconnue, ni dans le dépôt ni dans la CI.
