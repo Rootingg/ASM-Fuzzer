@@ -160,6 +160,8 @@ fuzz_campaign:
     je .on_crash
     cmp rax, EXIT_TIMEOUT
     je .on_timeout
+    cmp rax, EXIT_ERROR
+    je .bad_stack
     cmp rax, 0
     jl .bad_stack
     jmp .next

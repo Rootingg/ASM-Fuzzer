@@ -22,6 +22,8 @@ Le fuzzer est un outil local. Il exécute une cible choisie par l'opérateur. Ce
 | Menace | Mesure |
 | --- | --- |
 | Cible qui consomme le CPU ou la mémoire | `RLIMIT_CPU`, `RLIMIT_AS`, `RLIMIT_FSIZE` |
+| Élévation via un binaire setuid | `no_new_privs`, capacités vidées, refus si uid ou gid root |
+| Descripteur hérité par la cible | fermeture de tout descripteur supérieur au canal de couverture |
 | Cible bloquée sans consommer de CPU | Délai mural, `SIGKILL` du groupe, résultat `timeout` |
 | Parent bloqué sur un tube plein | Écriture non bloquante et `poll` |
 | Injection de shell via le chemin ou l'entrée | `execve` direct, arguments séparés |

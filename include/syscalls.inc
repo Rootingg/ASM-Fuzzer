@@ -16,7 +16,15 @@
 %define SYS_wait4 61
 %define SYS_kill 62
 %define SYS_fcntl 72
+%define SYS_getuid 102
+%define SYS_getgid 104
+%define SYS_geteuid 107
+%define SYS_getegid 108
 %define SYS_setpgid 109
+%define SYS_capget 125
+%define SYS_capset 126
+%define SYS_prctl 157
+%define SYS_close_range 436
 %define SYS_setrlimit 160
 %define SYS_clock_gettime 228
 %define SYS_getdents64 217
@@ -28,6 +36,10 @@
 %define O_RDONLY 0
 %define O_DIRECTORY 0x10000
 %define ENOTDIR -20
+%define ENOSYS -38
+%define PR_SET_NO_NEW_PRIVS 38
+%define CAP_VERSION_3 0x20080522
+%define CAP_VERSION_1 0x19980330
 %define DT_UNKNOWN 0
 %define DT_REG 8
 %define S_IFMT 0xF000

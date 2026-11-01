@@ -49,7 +49,9 @@ Le délai par défaut est une seconde de temps réel (`--timeout`). À l'échéa
 | `timeout` | Échéance murale, `SIGKILL` ou `SIGXCPU` | 3 |
 | `error` | Le lancement a échoué, ou l'enfant s'est terminé avec le code 127 | 1 |
 
-`RLIMIT_CPU` reste un filet. Une cible bloquée dans `read` ou `pause` ne consomme presque pas de CPU : seul le délai mural l'arrête. Ces limites ne sont pas une sandbox. L'isolation par namespace et seccomp est prévue pour une version ultérieure, voir [roadmap.md](roadmap.md).
+`RLIMIT_CPU` reste un filet. Une cible bloquée dans `read` ou `pause` ne consomme presque pas de CPU : seul le délai mural l'arrête.
+
+Avant `execve`, l'enfant active `no_new_privs`, vide ses capacités, et ferme les descripteurs au-dessus du canal de couverture. Le fuzzer refuse de démarrer si son uid ou son gid réel ou effectif est root. Ce n'est pas encore un bac à sable : les namespaces, le système de fichiers restreint et seccomp viennent ensuite, voir [roadmap.md](roadmap.md).
 
 ## Cible de démonstration
 
