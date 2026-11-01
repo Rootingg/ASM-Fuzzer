@@ -16,6 +16,7 @@ FUZZER_OBJS := \
 	$(BUILD)/src/core/engine.o \
 	$(BUILD)/src/core/executor.o \
 	$(BUILD)/src/core/signals.o \
+	$(BUILD)/src/core/coverage.o \
 	$(BUILD)/src/mutators/bitflip.o \
 	$(BUILD)/src/mutators/byteflip.o \
 	$(BUILD)/src/mutators/arithmetic.o \
@@ -41,6 +42,7 @@ tools: \
 	$(BUILD)/block-read-target \
 	$(BUILD)/multi-target \
 	$(BUILD)/shrink-target \
+	$(BUILD)/path-target \
 	$(BUILD)/test-mutators \
 	$(BUILD)/test-memory \
 	$(BUILD)/test-signals \
@@ -71,6 +73,10 @@ $(BUILD)/multi-target: $(BUILD)/tests/targets/multi_target.o
 	$(LD) $(LDFLAGS) -o $@ $<
 
 $(BUILD)/shrink-target: $(BUILD)/tests/targets/shrink_target.o
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $<
+
+$(BUILD)/path-target: $(BUILD)/tests/targets/path_target.o
 	mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) -o $@ $<
 

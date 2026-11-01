@@ -32,3 +32,6 @@
 %define MAX_SEEDS 16
 %define SEED_NAME 256
 %define MINIMIZE_ATTEMPTS 32
+%define COVER_QUEUE 8
+%define COVER_KEEP 64
+%define COV_FD 3

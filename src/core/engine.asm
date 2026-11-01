@@ -5,6 +5,11 @@
 
 %include "constants.inc"
 
+section .bss
+queue_used: resq 1
+queue_len: resq COVER_QUEUE
+queue_data: resb COVER_QUEUE * COVER_KEEP
+
 section .text
 extern mem_copy
 extern apply_mutation
@@ -12,6 +17,7 @@ extern execute_target
 extern crash_save
 extern crash_name
 extern minimize_input
+extern coverage_last_new
 global fuzz_campaign
 
 ; fuzz_campaign - run one campaign.
@@ -53,7 +59,7 @@ fuzz_campaign:
     test rcx, rcx
     jz .bad
 
-    sub rsp, 112
+    sub rsp, 128
     mov qword [rsp], 0
     mov [rsp + 8], rcx
     mov [rsp + 16], rax
@@ -65,6 +71,18 @@ fuzz_campaign:
     mov [rsp + 72], r9
     mov [rsp + 80], r11
     mov [rsp + 88], rbp
+    mov [rsp + 104], r13
+    mov qword [rel queue_used], 0
+    cmp r13, COVER_KEEP
+    ja .loop
+    test r13, r13
+    jz .loop
+    lea rdi, [rel queue_data]
+    mov rsi, r12
+    mov rdx, r13
+    call mem_copy
+    mov [rel queue_len], r13
+    mov qword [rel queue_used], 1
 
 .loop:
     mov rax, [rsp]
@@ -72,11 +90,30 @@ fuzz_campaign:
     jae .finish
 
     test r13, r13
-    jz .run
+    jz .run_empty
+    cmp qword [rel queue_used], 0
+    je .from_seed
+    mov rax, [rsp]
+    xor edx, edx
+    mov rcx, [rel queue_used]
+    div rcx
+    mov rcx, rdx
+    imul rdx, COVER_KEEP
+    lea rsi, [rel queue_data]
+    add rsi, rdx
+    lea r8, [rel queue_len]
+    mov r13, [r8 + rcx*8]
+    mov rdi, r14
+    mov rdx, r13
+    call mem_copy
+    jmp .mutate
+.from_seed:
+    mov r13, [rsp + 104]
     mov rdi, r14
     mov rsi, r12
     mov rdx, r13
     call mem_copy
+.mutate:
     mov rdi, r14
     mov rsi, r13
     mov rdx, [rsp]
@@ -84,6 +121,10 @@ fuzz_campaign:
     call apply_mutation
     test rax, rax
     jnz .bad_stack
+    jmp .run
+
+.run_empty:
+    mov r13, [rsp + 104]
 
 .run:
     mov rdi, rbx
@@ -92,6 +133,29 @@ fuzz_campaign:
     mov rcx, [rsp + 16]
     lea r8, [rsp + 64]
     call execute_target
+    mov [rsp + 112], rax
+    cmp rax, 0
+    jl .bad_stack
+    cmp qword [rel coverage_last_new], 0
+    je .classified
+    cmp r13, COVER_KEEP
+    ja .classified
+    cmp qword [rel queue_used], COVER_QUEUE
+    jae .classified
+    mov rax, [rel queue_used]
+    mov rcx, rax
+    imul rcx, COVER_KEEP
+    lea rdi, [rel queue_data]
+    add rdi, rcx
+    mov rsi, r14
+    mov rdx, r13
+    call mem_copy
+    mov rax, [rel queue_used]
+    lea r8, [rel queue_len]
+    mov [r8 + rax*8], r13
+    inc qword [rel queue_used]
+.classified:
+    mov rax, [rsp + 112]
     cmp rax, EXIT_CRASH
     je .on_crash
     cmp rax, EXIT_TIMEOUT
@@ -176,7 +240,7 @@ fuzz_campaign:
     mov rdi, [rsp + 88]
     mov rcx, [rsp + 48]
     mov [rdi + 80], rcx
-    add rsp, 112
+    add rsp, 128
     jmp .leave
 .bad:
     mov rax, -1

@@ -25,6 +25,8 @@ Avant d'écrire un crash, le fuzzer cherche le plus court préfixe qui reproduit
 
 La sortie compte les exécutions, y compris celles de la minimisation, et le débit en exécutions par seconde.
 
+Une cible instrumentée écrit des identifiants d'arêtes sur le descripteur 3. Si une exécution découvre une arête nouvelle, son entrée rejoint une file d'au plus 8 tampons de 64 octets et les essais suivants partent de cette file. Une cible sans instrumentation n'écrit rien : la campagne reste celle de la graine d'origine. `edges` donne le nombre d'arêtes distinctes vues pendant le processus.
+
 Le nombre d'essais est `--iterations`, y compris au-delà du voisinage des bits du corpus. La valeur par défaut reste 64.
 
 ## Exécution
