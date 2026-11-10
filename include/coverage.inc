@@ -1,4 +1,5 @@
 ; Lightweight edge mark. The fuzzer maps this descriptor to a pipe.
+; The identifier is 16 bits. Reusing a number merges two edges into one.
 ; A closed or missing descriptor is ignored, so the target still runs alone.
 
 %define COV_FD 3

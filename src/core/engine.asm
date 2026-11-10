@@ -5,11 +5,6 @@
 
 %include "constants.inc"
 
-section .bss
-queue_used: resq 1
-queue_len: resq COVER_QUEUE
-queue_data: resb COVER_QUEUE * COVER_KEEP
-
 section .text
 extern mem_copy
 extern apply_mutation
@@ -18,6 +13,10 @@ extern crash_save
 extern crash_name
 extern minimize_input
 extern coverage_last_new
+extern queue_reset
+extern queue_seed
+extern queue_base
+extern queue_admit
 global fuzz_campaign
 
 ; fuzz_campaign - run one campaign.
@@ -72,17 +71,10 @@ fuzz_campaign:
     mov [rsp + 80], r11
     mov [rsp + 88], rbp
     mov [rsp + 104], r13
-    mov qword [rel queue_used], 0
-    cmp r13, COVER_KEEP
-    ja .loop
-    test r13, r13
-    jz .loop
-    lea rdi, [rel queue_data]
-    mov rsi, r12
-    mov rdx, r13
-    call mem_copy
-    mov [rel queue_len], r13
-    mov qword [rel queue_used], 1
+    call queue_reset
+    mov rdi, r12
+    mov rsi, r13
+    call queue_seed
 
 .loop:
     mov rax, [rsp]
@@ -91,18 +83,12 @@ fuzz_campaign:
 
     test r13, r13
     jz .run_empty
-    cmp qword [rel queue_used], 0
-    je .from_seed
-    mov rax, [rsp]
-    xor edx, edx
-    mov rcx, [rel queue_used]
-    div rcx
-    mov rcx, rdx
-    imul rdx, COVER_KEEP
-    lea rsi, [rel queue_data]
-    add rsi, rdx
-    lea r8, [rel queue_len]
-    mov r13, [r8 + rcx*8]
+    mov rdi, [rsp]
+    call queue_base
+    cmp rax, 0
+    jl .from_seed
+    mov r13, rax
+    mov rsi, rdx
     mov rdi, r14
     mov rdx, r13
     call mem_copy
@@ -136,24 +122,10 @@ fuzz_campaign:
     mov [rsp + 112], rax
     cmp rax, 0
     jl .bad_stack
-    cmp qword [rel coverage_last_new], 0
-    je .classified
-    cmp r13, COVER_KEEP
-    ja .classified
-    cmp qword [rel queue_used], COVER_QUEUE
-    jae .classified
-    mov rax, [rel queue_used]
-    mov rcx, rax
-    imul rcx, COVER_KEEP
-    lea rdi, [rel queue_data]
-    add rdi, rcx
-    mov rsi, r14
-    mov rdx, r13
-    call mem_copy
-    mov rax, [rel queue_used]
-    lea r8, [rel queue_len]
-    mov [r8 + rax*8], r13
-    inc qword [rel queue_used]
+    mov rdi, r14
+    mov rsi, r13
+    mov rdx, [rel coverage_last_new]
+    call queue_admit
 .classified:
     mov rax, [rsp + 112]
     cmp rax, EXIT_CRASH
