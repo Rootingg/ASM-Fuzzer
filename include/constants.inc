@@ -35,3 +35,7 @@
 %define COVER_QUEUE 8
 %define COVER_KEEP 64
 %define COV_FD 3
+%define EDGE_BITS 65536
+%define EDGE_BYTES 8192
+%define DRAIN_CHUNK 4096
+%define DRAIN_BUDGET 65536

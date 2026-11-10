@@ -17,6 +17,7 @@ FUZZER_OBJS := \
 	$(BUILD)/src/core/executor.o \
 	$(BUILD)/src/core/signals.o \
 	$(BUILD)/src/core/coverage.o \
+	$(BUILD)/src/core/queue.o \
 	$(BUILD)/src/core/privilege.o \
 	$(BUILD)/src/mutators/bitflip.o \
 	$(BUILD)/src/mutators/byteflip.o \
@@ -44,12 +45,14 @@ tools: \
 	$(BUILD)/multi-target \
 	$(BUILD)/shrink-target \
 	$(BUILD)/path-target \
+	$(BUILD)/flood-target \
 	$(BUILD)/priv-target \
 	$(BUILD)/test-mutators \
 	$(BUILD)/test-memory \
 	$(BUILD)/test-signals \
 	$(BUILD)/test-schedule \
-	$(BUILD)/test-privilege
+	$(BUILD)/test-privilege \
+	$(BUILD)/test-queue
 
 $(BUILD)/asm-fuzzer: $(FUZZER_OBJS)
 	mkdir -p $(dir $@)
@@ -82,6 +85,18 @@ $(BUILD)/shrink-target: $(BUILD)/tests/targets/shrink_target.o
 $(BUILD)/path-target: $(BUILD)/tests/targets/path_target.o
 	mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) -o $@ $<
+
+$(BUILD)/flood-target: $(BUILD)/tests/targets/flood_target.o
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $<
+
+$(BUILD)/test-queue: \
+	$(BUILD)/tests/unit/test_queue.o \
+	$(BUILD)/src/core/queue.o \
+	$(BUILD)/src/core/coverage.o \
+	$(BUILD)/src/utils/memory.o
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $^
 
 $(BUILD)/priv-target: $(BUILD)/tests/targets/priv_target.o
 	mkdir -p $(dir $@)

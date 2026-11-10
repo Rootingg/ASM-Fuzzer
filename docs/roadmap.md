@@ -36,6 +36,7 @@ Présent sur `develop`. Le tag attend une branche `release/*`.
 - Les cibles instrumentées marquent des arêtes sur le descripteur 3.
 - Une entrée qui ouvre une arête nouvelle est reprise comme base des mutations suivantes.
 - `edges` compte les arêtes distinctes. Les cibles non instrumentées restent inchangées.
+- Un même identifiant de 16 bits compte pour une seule arête. La file de huit entrées garde la graine, retire une entrée déjà couverte, puis remplace le plus faible score de nouveauté.
 
 ## v1.0.0 — Première version mature
 

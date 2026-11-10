@@ -10,7 +10,7 @@ else
     bin="$root/$build"
 fi
 
-for test_bin in test-mutators test-memory test-signals test-schedule test-privilege; do
+for test_bin in test-mutators test-memory test-signals test-schedule test-privilege test-queue; do
     echo "unit: $test_bin"
     "$bin/$test_bin"
 done

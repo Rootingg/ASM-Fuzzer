@@ -31,7 +31,7 @@ extern sys_nanosleep_ms
 extern classify_wait_status
 extern coverage_reset
 extern coverage_drain
-extern coverage_commit
+extern coverage_finish
 extern privilege_lock_child
 global execute_target
 
@@ -233,8 +233,7 @@ execute_target:
 
 .classify:
     mov edi, [rsp + 80]
-    call coverage_drain
-    call coverage_commit
+    call coverage_finish
     mov r11, [rsp + 72]
     test r11, r11
     jz .classify_call
@@ -261,8 +260,7 @@ execute_target:
     cmp rax, EINTR
     je .reap_timeout
     mov edi, [rsp + 80]
-    call coverage_drain
-    call coverage_commit
+    call coverage_finish
     mov r11, [rsp + 72]
     test r11, r11
     jz .timeout_code
