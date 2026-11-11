@@ -35,4 +35,4 @@ Le fuzzer est un outil local. Il exécute une cible choisie par l'opérateur. Ce
 
 ## Hors périmètre actuel
 
-Les namespaces sont tentés avant `execve`, puis le filtre seccomp. Quand le noyau refuse l'un des deux, la cible tourne quand même et stderr le dit. L'exécution d'un corpus non maîtrisé reste hors CI. L'évaluation d'ensemble avant une release n'est pas faite.
+Les namespaces sont tentés avant `execve`, puis le filtre seccomp. Quand le noyau refuse l'un des deux, la cible tourne quand même et stderr le dit. `tests/integration/validate.sh` rejoue un crash, compare les arêtes, et vérifie qu'aucun processus cible ne reste. L'exécution d'un corpus non maîtrisé reste hors CI.
