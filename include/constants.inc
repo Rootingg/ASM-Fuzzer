@@ -18,6 +18,7 @@
 %define SIGKILL 9
 %define SIGSEGV 11
 %define SIGXCPU 24
+%define SIGSYS  31
 
 %define RLIMIT_CPU 0
 %define RLIMIT_FSIZE 1
