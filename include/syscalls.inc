@@ -10,12 +10,15 @@
 %define SYS_pipe 22
 %define SYS_dup2 33
 %define SYS_pause 34
+%define SYS_unshare 272
+%define SYS_mount 165
 %define SYS_fork 57
 %define SYS_execve 59
 %define SYS_exit 60
 %define SYS_wait4 61
 %define SYS_kill 62
 %define SYS_fcntl 72
+%define SYS_getpid 39
 %define SYS_getuid 102
 %define SYS_getgid 104
 %define SYS_geteuid 107

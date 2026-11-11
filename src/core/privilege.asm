@@ -27,7 +27,9 @@ privilege_blocked:
     mov eax, 1
     ret
 
-; privilege_guard - refuse root and lock the fuzzer process itself.
+; privilege_guard - refuse root and drop capabilities in the fuzzer.
+; no_new_privs stays off here. The child sets it after creating namespaces,
+; because that flag makes CLONE_NEWUSER fail.
 ; OUT: rax 0, or -1
 privilege_guard:
     push rbx
@@ -51,9 +53,6 @@ privilege_guard:
     call privilege_blocked
     test rax, rax
     jnz .deny
-    call set_no_new_privs
-    test rax, rax
-    js .deny
     call drop_capabilities
     test rax, rax
     js .deny
