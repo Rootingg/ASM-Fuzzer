@@ -33,6 +33,9 @@ extern coverage_reset
 extern coverage_drain
 extern coverage_finish
 extern privilege_lock_child
+extern namespace_enter
+extern namespace_announce
+extern ns_write_fd
 global execute_target
 
 ; execute_target - execute a program once.
@@ -62,6 +65,8 @@ execute_target:
     mov dword [rsp + 12], -1
     mov dword [rsp + 80], -1
     mov dword [rsp + 84], -1
+    mov dword [rsp + 88], -1
+    mov dword [rsp + 92], -1
     call coverage_reset
 
     mov rdi, rsp
@@ -75,6 +80,15 @@ execute_target:
     mov dword [rsp + 80], -1
     mov dword [rsp + 84], -1
 .have_cov:
+    lea rdi, [rsp + 88]
+    call sys_pipe
+    test rax, rax
+    jns .have_ns
+    mov dword [rsp + 88], -1
+    mov dword [rsp + 92], -1
+.have_ns:
+    mov eax, [rsp + 92]
+    mov [rel ns_write_fd], eax
 
     call sys_fork
     cmp rax, 0
@@ -82,6 +96,13 @@ execute_target:
     je .child
 
     mov r15, rax
+    mov dword [rel ns_write_fd], -1
+    mov edi, [rsp + 92]
+    cmp edi, 0
+    jl .ns_write_closed
+    call sys_close
+    mov dword [rsp + 92], -1
+.ns_write_closed:
     inc qword [rel exec_count]
     mov edi, [rsp]
     call sys_close
@@ -298,6 +319,7 @@ execute_target:
     xor edi, edi
     xor esi, esi
     call sys_setpgid
+    call namespace_enter
     mov edi, [rsp + 4]
     call sys_close
     mov edi, [rsp]
@@ -401,6 +423,18 @@ execute_target:
     call sys_close
 .close_cov_write:
     mov edi, [rsp + 84]
+    cmp edi, 0
+    jl .close_ns_write
+    call sys_close
+.close_ns_write:
+    mov edi, [rsp + 92]
+    cmp edi, 0
+    jl .announce_ns
+    call sys_close
+.announce_ns:
+    mov edi, [rsp + 88]
+    call namespace_announce
+    mov edi, [rsp + 88]
     cmp edi, 0
     jl .restore
     call sys_close

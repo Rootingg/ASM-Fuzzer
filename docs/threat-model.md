@@ -33,4 +33,4 @@ Le fuzzer est un outil local. Il exécute une cible choisie par l'opérateur. Ce
 
 ## Hors périmètre actuel
 
-Isolation par namespace, filtrage seccomp, et exécution d'un corpus non maîtrisé. Ces points arriveront dans des branches `feature/*` avec des tests dédiés, pas en élargissant ce que la CI a le droit de lancer.
+Le système de fichiers reste visible, et seccomp n'est pas posé. Les namespaces utilisateur, montage, PID et réseau sont tentés avant `execve` : en cas de refus du noyau, la cible tourne quand même. L'exécution d'un corpus non maîtrisé reste hors CI.

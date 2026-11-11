@@ -19,6 +19,7 @@ FUZZER_OBJS := \
 	$(BUILD)/src/core/coverage.o \
 	$(BUILD)/src/core/queue.o \
 	$(BUILD)/src/core/privilege.o \
+	$(BUILD)/src/core/namespace.o \
 	$(BUILD)/src/mutators/bitflip.o \
 	$(BUILD)/src/mutators/byteflip.o \
 	$(BUILD)/src/mutators/arithmetic.o \
@@ -47,6 +48,7 @@ tools: \
 	$(BUILD)/path-target \
 	$(BUILD)/flood-target \
 	$(BUILD)/priv-target \
+	$(BUILD)/ns-target \
 	$(BUILD)/test-mutators \
 	$(BUILD)/test-memory \
 	$(BUILD)/test-signals \
@@ -99,6 +101,10 @@ $(BUILD)/test-queue: \
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(BUILD)/priv-target: $(BUILD)/tests/targets/priv_target.o
+	mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $<
+
+$(BUILD)/ns-target: $(BUILD)/tests/targets/ns_target.o
 	mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) -o $@ $<
 

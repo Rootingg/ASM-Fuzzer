@@ -53,7 +53,9 @@ Le délai par défaut est une seconde de temps réel (`--timeout`). À l'échéa
 
 `RLIMIT_CPU` reste un filet. Une cible bloquée dans `read` ou `pause` ne consomme presque pas de CPU : seul le délai mural l'arrête.
 
-Avant `execve`, l'enfant active `no_new_privs`, vide ses capacités, et ferme les descripteurs au-dessus du canal de couverture. Le fuzzer refuse de démarrer si son uid ou son gid réel ou effectif est root. Ce n'est pas encore un bac à sable : les namespaces, le système de fichiers restreint et seccomp viennent ensuite, voir [roadmap.md](roadmap.md).
+Avant `execve`, l'enfant essaie d'entrer dans des namespaces utilisateur, montage, PID et réseau. `no_new_privs` est posé seulement après : ce drapeau ferait échouer `CLONE_NEWUSER`. Si le noyau refuse les namespaces, la cible tourne quand même et stderr porte `namespaces none`. `namespaces full` veut dire que la cible est le PID 1 de son espace. `namespaces partial` veut dire qu'une partie seulement a été obtenue. Le réseau de la cible, quand l'espace réseau est créé, ne contient que la boucle locale.
+
+Ensuite l'enfant active `no_new_privs`, vide ses capacités, et ferme les descripteurs au-dessus du canal de couverture. Le fuzzer refuse de démarrer si son uid ou son gid réel ou effectif est root. Ce n'est pas encore un bac à sable : le système de fichiers reste visible, et seccomp n'est pas posé. Voir [roadmap.md](roadmap.md).
 
 ## Cible de démonstration
 

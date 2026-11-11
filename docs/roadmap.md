@@ -43,7 +43,7 @@ Présent sur `develop`. Le tag attend une branche `release/*`.
 Pas encore. L'isolation se découpe, et `main` ne reçoit une release qu'une fois l'ensemble évalué.
 
 - `feature/privilege-isolation` : `no_new_privs`, capacités vidées, refus du root, descripteurs hérités fermés.
-- `feature/namespace-isolation` : espaces utilisateur, montage, PID et réseau, avec un repli explicite s'ils sont indisponibles.
+- `feature/namespace-isolation` : espaces utilisateur, montage, PID et réseau. Présent sur cette branche. Le repli est `namespaces none` ou `namespaces partial` sur stderr.
 - `feature/filesystem-isolation` : arborescence minimale et descripteurs hérités revus dans ce cadre.
 - `feature/seccomp-policy` : syscalls autorisés, avec des tests positifs et négatifs.
 

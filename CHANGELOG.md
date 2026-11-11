@@ -6,6 +6,7 @@ Le format est inspiré de Keep a Changelog. Les versions suivent Semantic Versio
 
 ### Added
 
+- Namespaces utilisateur, montage, PID et réseau pour la cible, avec un repli explicite s'ils sont refusés.
 - Les identifiants d'arêtes identiques se confondent, le tube de couverture est borné, et la file remplace l'entrée la moins nouvelle.
 - Refus d'une exécution root, `no_new_privs`, capacités vidées, et fermeture des descripteurs hérités par la cible.
 - Couverture par arêtes : les entrées qui ouvrent un chemin nouveau alimentent les mutations suivantes.
