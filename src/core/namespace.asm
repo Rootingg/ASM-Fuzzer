@@ -40,6 +40,7 @@ global namespace_enter
 global namespace_announce
 global ns_mode
 extern filesystem_report
+extern seccomp_report
 
 ; namespace_enter - isolate the caller, or report that isolation is unavailable.
 ; OUT: rax 0 in the process that must exec. The PID-namespace waiter does not return.
@@ -173,7 +174,7 @@ namespace_announce:
     sub rsp, 16
     mov eax, SYS_read
     mov rsi, rsp
-    mov edx, 2
+    mov edx, 3
     syscall
     cmp rax, 1
     jl .leave
@@ -199,6 +200,10 @@ namespace_announce:
     jl .leave
     movzx edi, byte [rsp + 1]
     call filesystem_report
+    cmp qword [rsp + 8], 3
+    jl .leave
+    movzx edi, byte [rsp + 2]
+    call seccomp_report
 .leave:
     add rsp, 16
     pop rbx

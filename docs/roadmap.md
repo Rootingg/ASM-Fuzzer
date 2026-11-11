@@ -45,6 +45,6 @@ Pas encore. L'isolation se découpe, et `main` ne reçoit une release qu'une foi
 - `feature/privilege-isolation` : `no_new_privs`, capacités vidées, refus du root, descripteurs hérités fermés.
 - `feature/namespace-isolation` : espaces utilisateur, montage, PID et réseau. Présent sur cette branche. Le repli est `namespaces none` ou `namespaces partial` sur stderr.
 - `feature/filesystem-isolation` : racine réduite à la copie de la cible. Présent sur cette branche. Le repli est `filesystem host`.
-- `feature/seccomp-policy` : syscalls autorisés, avec des tests positifs et négatifs.
+- `feature/seccomp-policy` : liste d'appels autorisés. Présent sur cette branche. Le repli est `seccomp none`. Un appel refusé meurt par `SIGSYS`.
 
 `no_new_privs` seul n'est pas un bac à sable. Les sous-processus et les descripteurs se jugent avec les étapes suivantes. Une cible non fiable ne doit pas être lancée sur un runner GitHub.

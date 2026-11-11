@@ -10,6 +10,10 @@
 %define SYS_pipe 22
 %define SYS_dup2 33
 %define SYS_pause 34
+%define SYS_rt_sigreturn 15
+%define SYS_socket 41
+%define SYS_exit_group 231
+%define SYS_seccomp 317
 %define SYS_unshare 272
 %define SYS_mount 165
 %define SYS_fork 57
