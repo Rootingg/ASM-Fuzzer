@@ -35,6 +35,7 @@ extern coverage_finish
 extern privilege_lock_child
 extern namespace_enter
 extern namespace_announce
+extern filesystem_enter
 extern ns_write_fd
 global execute_target
 
@@ -320,6 +321,9 @@ execute_target:
     xor esi, esi
     call sys_setpgid
     call namespace_enter
+    mov rdi, rbx
+    call filesystem_enter
+    mov rbx, rax
     mov edi, [rsp + 4]
     call sys_close
     mov edi, [rsp]

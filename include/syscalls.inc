@@ -28,7 +28,13 @@
 %define SYS_capset 126
 %define SYS_prctl 157
 %define SYS_close_range 436
+%define SYS_chdir 80
+%define SYS_fchmod 91
+%define SYS_pivot_root 155
+%define SYS_chroot 161
+%define SYS_umount2 166
 %define SYS_setrlimit 160
+%define SYS_mkdirat 258
 %define SYS_clock_gettime 228
 %define SYS_getdents64 217
 %define SYS_openat 257
