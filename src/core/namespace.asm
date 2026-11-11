@@ -33,10 +33,13 @@ section .data
 global ns_write_fd
 ns_write_fd: dd -1
 ns_seen: db 0
+ns_mode: db 0
 
 section .text
 global namespace_enter
 global namespace_announce
+global ns_mode
+extern filesystem_report
 
 ; namespace_enter - isolate the caller, or report that isolation is unavailable.
 ; OUT: rax 0 in the process that must exec. The PID-namespace waiter does not return.
@@ -83,6 +86,7 @@ namespace_enter:
     test rax, rax
     js .report
     or ebx, NS_PID
+    call report_mode
     mov eax, SYS_fork
     syscall
     test rax, rax
@@ -95,6 +99,7 @@ namespace_enter:
     call report_mode
     xor eax, eax
 .leave:
+    mov [rel ns_mode], bl
     pop r15
     pop r14
     pop r13
@@ -104,7 +109,6 @@ namespace_enter:
 
 .wait_target:
     mov r14, rax
-    call report_mode
     mov eax, SYS_wait4
     mov rdi, r14
     sub rsp, 16
@@ -157,10 +161,6 @@ report_mode:
     mov edx, 1
     syscall
     add rsp, 16
-    mov edi, [rel ns_write_fd]
-    mov eax, SYS_close
-    syscall
-    mov dword [rel ns_write_fd], -1
 .done:
     ret
 
@@ -173,12 +173,13 @@ namespace_announce:
     sub rsp, 16
     mov eax, SYS_read
     mov rsi, rsp
-    mov edx, 1
+    mov edx, 2
     syscall
     cmp rax, 1
-    jne .leave
+    jl .leave
+    mov qword [rsp + 8], rax
     cmp byte [rel ns_seen], 0
-    jne .leave
+    jne .fs_byte
     mov byte [rel ns_seen], 1
     movzx ebx, byte [rsp]
     lea rsi, [rel msg_none]
@@ -193,6 +194,11 @@ namespace_announce:
     mov edx, msg_full_len
 .write:
     call write_stderr
+.fs_byte:
+    cmp qword [rsp + 8], 2
+    jl .leave
+    movzx edi, byte [rsp + 1]
+    call filesystem_report
 .leave:
     add rsp, 16
     pop rbx

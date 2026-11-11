@@ -55,7 +55,9 @@ Le délai par défaut est une seconde de temps réel (`--timeout`). À l'échéa
 
 Avant `execve`, l'enfant essaie d'entrer dans des namespaces utilisateur, montage, PID et réseau. `no_new_privs` est posé seulement après : ce drapeau ferait échouer `CLONE_NEWUSER`. Si le noyau refuse les namespaces, la cible tourne quand même et stderr porte `namespaces none`. `namespaces full` veut dire que la cible est le PID 1 de son espace. `namespaces partial` veut dire qu'une partie seulement a été obtenue. Le réseau de la cible, quand l'espace réseau est créé, ne contient que la boucle locale.
 
-Ensuite l'enfant active `no_new_privs`, vide ses capacités, et ferme les descripteurs au-dessus du canal de couverture. Le fuzzer refuse de démarrer si son uid ou son gid réel ou effectif est root. Ce n'est pas encore un bac à sable : le système de fichiers reste visible, et seccomp n'est pas posé. Voir [roadmap.md](roadmap.md).
+Quand ce namespace de montage existe, l'enfant copie la cible dans un tmpfs et en fait sa racine avec `pivot_root`, ou avec `chroot` si le pivot est refusé. `filesystem hidden` veut dire que la cible s'exécute sous `/target` et ne voit plus `/etc`. `filesystem host` veut dire que cette étape a échoué et que la vue de l'hôte est conservée. Les montages restent dans le namespace : ils ne remontent pas vers l'hôte.
+
+Ensuite l'enfant active `no_new_privs`, vide ses capacités, et ferme les descripteurs au-dessus du canal de couverture. Le fuzzer refuse de démarrer si son uid ou son gid réel ou effectif est root. Seccomp n'est pas encore posé. Voir [roadmap.md](roadmap.md).
 
 ## Cible de démonstration
 
