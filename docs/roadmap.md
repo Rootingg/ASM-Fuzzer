@@ -1,6 +1,6 @@
 # Feuille de route
 
-La v0.1.0 n'est pas encore taguée. `main` ne reçoit une version que par `release/*`, une fois les critères de la ligne atteints.
+Aucun tag n'est posé. La première version prévue est `v1.0.0`, par `release/*`, selon [release.md](release.md).
 
 ## v0.1.0 — Bootstrap stable
 
@@ -40,11 +40,12 @@ Présent sur `develop`. Le tag attend une branche `release/*`.
 
 ## v1.0.0 — Première version mature
 
-Pas encore. L'isolation se découpe, et `main` ne reçoit une release qu'une fois l'ensemble évalué.
+Le code de l'isolation et l'évaluation sont sur cette branche. `main` reçoit le tag `v1.0.0` par une PR `release/*`, après l'intégration dans `develop`. L'ordre est dans [release.md](release.md).
 
-- `feature/privilege-isolation` : `no_new_privs`, capacités vidées, refus du root, descripteurs hérités fermés.
-- `feature/namespace-isolation` : espaces utilisateur, montage, PID et réseau. Présent sur cette branche. Le repli est `namespaces none` ou `namespaces partial` sur stderr.
-- `feature/filesystem-isolation` : racine réduite à la copie de la cible. Présent sur cette branche. Le repli est `filesystem host`.
-- `feature/seccomp-policy` : liste d'appels autorisés. Présent sur cette branche. Le repli est `seccomp none`. Un appel refusé meurt par `SIGSYS`.
+- `feature/privilege-isolation` : `no_new_privs`, capacités vidées, refus du root, descripteurs hérités fermés. Déjà sur `develop`.
+- `feature/namespace-isolation` : espaces utilisateur, montage, PID et réseau. Le repli est `namespaces none` ou `namespaces partial`.
+- `feature/filesystem-isolation` : racine réduite à la copie de la cible. Le repli est `filesystem host`.
+- `feature/seccomp-policy` : liste d'appels autorisés. Le repli est `seccomp none`. Un appel refusé meurt par `SIGSYS`.
+- Évaluation : `tests/integration/validate.sh`. Rejeu du crash, débit, arêtes contre une cible aveugle, absence de processus restant, durée et mémoire bornées. Passage local : 256 essais en 379 ms, 701 exec/s, 3 arêtes contre 0, pic 60 Kio, `namespaces full`, `filesystem hidden`, `seccomp on`.
 
-`no_new_privs` seul n'est pas un bac à sable. Les sous-processus et les descripteurs se jugent avec les étapes suivantes. Une cible non fiable ne doit pas être lancée sur un runner GitHub.
+Une cible non fiable ne doit pas être lancée sur un runner GitHub.

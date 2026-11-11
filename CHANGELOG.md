@@ -6,6 +6,7 @@ Le format est inspiré de Keep a Changelog. Les versions suivent Semantic Versio
 
 ### Added
 
+- Évaluation de bout en bout : rejeu du crash, débit, couverture contre une cible aveugle, et absence de processus laissé derrière.
 - Filtre seccomp sur la cible : les appels hors liste meurent par `SIGSYS`, avec un repli explicite si le noyau refuse le filtre.
 - Racine réduite à la copie de la cible quand le namespace de montage est disponible, avec un repli explicite.
 - Namespaces utilisateur, montage, PID et réseau pour la cible, avec un repli explicite s'ils sont refusés.
