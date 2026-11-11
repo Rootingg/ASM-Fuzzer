@@ -1,6 +1,6 @@
 # Feuille de route
 
-La v0.1.0 n'est pas encore taguée. `main` ne reçoit une version que par `release/*`, une fois les critères de la ligne atteints.
+Aucun tag n'est posé. La première version prévue est `v1.0.0`, par `release/*`, selon [release.md](release.md).
 
 ## v0.1.0 — Bootstrap stable
 
@@ -40,7 +40,7 @@ Présent sur `develop`. Le tag attend une branche `release/*`.
 
 ## v1.0.0 — Première version mature
 
-Le code de l'isolation et l'évaluation sont sur cette branche. `main` ne reçoit le tag `v1.0.0` que par une PR `release/*`, après intégration dans `develop`.
+Le code de l'isolation et l'évaluation sont sur cette branche. `main` reçoit le tag `v1.0.0` par une PR `release/*`, après l'intégration dans `develop`. L'ordre est dans [release.md](release.md).
 
 - `feature/privilege-isolation` : `no_new_privs`, capacités vidées, refus du root, descripteurs hérités fermés. Déjà sur `develop`.
 - `feature/namespace-isolation` : espaces utilisateur, montage, PID et réseau. Le repli est `namespaces none` ou `namespaces partial`.

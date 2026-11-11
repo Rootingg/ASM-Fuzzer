@@ -17,7 +17,7 @@ feature/*  -->  PR  -->  develop
                            v
                       release/*
                            |
-                           +--> PR --> main      (tag v0.1.0)
+                           +--> PR --> main      (tag v1.0.0)
                            |
                            +--> PR --> develop   (synchronisation)
 ```
@@ -67,4 +67,4 @@ Les quatre rulesets sont actifs et n'ont aucun acteur autorisé à les contourne
 
 ## Version
 
-Un tag annoté `v0.1.0` se pose sur le commit de `main` qui contient la release, après le merge de `release/*`. Le workflow Release ne fait que builder, tester et publier l'artefact.
+Le premier tag annoté prévu est `v1.0.0`. Il se pose sur le commit de `main` qui contient la release, après le merge de `release/*`. Les étapes sont dans [release.md](release.md). Le workflow Release ne fait que builder, tester et publier l'artefact.
