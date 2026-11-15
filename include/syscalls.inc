@@ -10,6 +10,10 @@
 %define SYS_pipe 22
 %define SYS_dup2 33
 %define SYS_pause 34
+%define SYS_rt_sigreturn 15
+%define SYS_socket 41
+%define SYS_exit_group 231
+%define SYS_seccomp 317
 %define SYS_unshare 272
 %define SYS_mount 165
 %define SYS_fork 57
@@ -28,7 +32,13 @@
 %define SYS_capset 126
 %define SYS_prctl 157
 %define SYS_close_range 436
+%define SYS_chdir 80
+%define SYS_fchmod 91
+%define SYS_pivot_root 155
+%define SYS_chroot 161
+%define SYS_umount2 166
 %define SYS_setrlimit 160
+%define SYS_mkdirat 258
 %define SYS_clock_gettime 228
 %define SYS_getdents64 217
 %define SYS_openat 257

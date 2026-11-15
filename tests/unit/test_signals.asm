@@ -45,6 +45,11 @@ _start:
     test eax, eax
     jnz .fail
 
+    mov edi, SIGSYS
+    call wait_status_is_crash
+    cmp eax, 1
+    jne .fail
+
     mov edi, SIGSEGV
     call classify_wait_status
     cmp eax, EXIT_CRASH
@@ -68,6 +73,11 @@ _start:
     mov edi, SIGXCPU
     call classify_wait_status
     cmp eax, EXIT_TIMEOUT
+    jne .fail
+
+    mov edi, SIGSYS
+    call classify_wait_status
+    cmp eax, EXIT_CRASH
     jne .fail
 
     EXIT 0
