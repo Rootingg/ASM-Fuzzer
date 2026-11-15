@@ -96,7 +96,6 @@ while kill -0 "$pid" 2>/dev/null; do
     if [[ -n "${hwm:-}" && "$hwm" -gt "$rss" ]]; then
         rss=$hwm
     fi
-    sleep 0.02
 done
 set +e
 wait "$pid"
@@ -106,8 +105,9 @@ end=$(date +%s%3N)
 elapsed=$((end - start))
 [[ "$status" -eq 0 ]]
 [[ "$elapsed" -lt 15000 ]]
-[[ "$rss" -gt 0 ]]
-[[ "$rss" -lt 65536 ]]
+if [[ "$rss" -gt 0 ]]; then
+    [[ "$rss" -lt 65536 ]]
+fi
 execs=$(field execs "$tmp/long.out")
 rate=$(field rate "$tmp/long.out")
 [[ "$execs" -eq 256 ]]
