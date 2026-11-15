@@ -2,17 +2,16 @@
 
 ASM-Fuzzer est un binaire statique, sans libc. Chaque module est une unité NASM liée par `ld`.
 
-```text
-main
-  corpus_load        lit une entrée, tronquée à 131072 octets
-  corpus             un fichier ou un répertoire de graines, trié
-  fuzz_campaign      une mutation par essai, puis l'exécution
-  minimize_input     préfixe le plus court, puis suppression d'octets
-    mem_copy
-    apply_mutation   bitflip, byteflip ou arithmétique
-    execute_target   pipe non bloquant, fork, execve, timeout, wait4
-    classify_wait_status
-    crash_save       une entrée par signal
+```mermaid
+flowchart TD
+  load[Lecture de la graine] --> camp[Campagne]
+  camp --> copy[Copie puis une mutation]
+  copy --> exec[fork puis execve]
+  exec --> wait[Attente ou SIGKILL]
+  wait --> tri{Classification}
+  tri -->|crash| mini[Minimisation]
+  mini --> save["Une entrée par signal"]
+  tri -->|clean| camp
 ```
 
 ## Campagne
@@ -52,6 +51,14 @@ Le délai par défaut est une seconde de temps réel (`--timeout`). À l'échéa
 | `error` | Le lancement a échoué, ou l'enfant s'est terminé avec le code 127 | 1 |
 
 `RLIMIT_CPU` reste un filet. Une cible bloquée dans `read` ou `pause` ne consomme presque pas de CPU : seul le délai mural l'arrête.
+
+```mermaid
+flowchart LR
+  ns[Namespaces] --> fs["Racine réduite"]
+  fs --> lock[no_new_privs]
+  lock --> sec[seccomp]
+  sec --> exe[execve]
+```
 
 Avant `execve`, l'enfant essaie d'entrer dans des namespaces utilisateur, montage, PID et réseau. `no_new_privs` est posé seulement après : ce drapeau ferait échouer `CLONE_NEWUSER`. Si le noyau refuse les namespaces, la cible tourne quand même et stderr porte `namespaces none`. `namespaces full` veut dire que la cible est le PID 1 de son espace. `namespaces partial` veut dire qu'une partie seulement a été obtenue. Le réseau de la cible, quand l'espace réseau est créé, ne contient que la boucle locale.
 

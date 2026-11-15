@@ -11,15 +11,12 @@ Deux branches permanentes :
 | `release/*` | Préparation d'une version | Force-push bloqué, suppression autorisée après les merges |
 | `hotfix/*` | Correction urgente de production | Force-push bloqué, suppression autorisée après les merges |
 
-```text
-feature/*  -->  PR  -->  develop
-                           |
-                           v
-                      release/*
-                           |
-                           +--> PR --> main      (tag v1.0.0)
-                           |
-                           +--> PR --> develop   (synchronisation)
+```mermaid
+flowchart LR
+  feature[feature ou fix] --> develop[develop]
+  develop --> release[release]
+  release --> main[main et tag]
+  main --> develop
 ```
 
 Les hotfixes partent de `main`, puis reviennent dans `main` et dans `develop`.

@@ -2,7 +2,18 @@
 
 Fuzzer black-box x86-64 pour Linux, écrit en NASM, sans libc. Il lance la cible avec `execve`, sans shell. Les mutations sont bitflip, byteflip et arithmétique. Un corpus peut être un fichier ou un répertoire. Les crashs sont minimisés. Une cible qui écrit des arêtes sur le descripteur 3 oriente les essais suivants.
 
-Le dépôt suit Git Flow. `develop` intègre le travail. `main` ne reçoit une version que par `release/*` ou `hotfix/*`. Aucun tag n'est posé tant que la pile ouverte n'est pas mergée. La procédure est dans [docs/release.md](docs/release.md).
+Le dépôt suit Git Flow. `develop` est la branche par défaut. `main` porte le tag `v1.0.0`, arrivé par `release/*`. La procédure est dans [docs/release.md](docs/release.md).
+
+```mermaid
+flowchart LR
+  graine[Graine] --> mutation[Une mutation]
+  mutation --> exec[execve]
+  exec --> statut{Statut}
+  statut -->|clean| graine
+  statut -->|crash| min[Minimisation]
+  min --> fichier[Fichier de crash]
+  statut -->|timeout| kill[SIGKILL]
+```
 
 ## Prérequis
 
@@ -15,6 +26,19 @@ make BUILD=/tmp/asm-fuzzer-build test
 ```
 
 `make all` produit `build/asm-fuzzer`.
+
+## Démo
+
+La graine `BRSH` est à un bit de `CRSH`. Le fuzzer ne connaît pas ce mot : il le trouve, l'écrit, et le rejeu refait le `SIGSEGV`.
+
+```bash
+printf 'BRSH' > seed.bin
+./build/asm-fuzzer --target ./build/demo-target --input seed.bin \
+    --output crash.bin --iterations 64
+./build/demo-target < crash.bin
+```
+
+La sortie affiche `crash`, puis `execs`, `rate` et `edges`. Le second lancement se termine par un fault.
 
 ```bash
 ./build/asm-fuzzer ./build/demo-target corpus.bin crashes/latest.bin
