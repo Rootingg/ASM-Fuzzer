@@ -28,9 +28,11 @@ Le fuzzer est un outil local. Il exécute une cible choisie par l'opérateur. Ce
 | Parent bloqué sur un tube plein | Écriture non bloquante et `poll` |
 | Injection de shell via le chemin ou l'entrée | `execve` direct, arguments séparés |
 | Faux crash sur un timeout | `SIGKILL` et `SIGXCPU` sont des timeouts, pas des crashs |
+| Lecture du disque de l'hôte | racine réduite à la copie de la cible, sinon repli explicite |
+| Appel système hors liste | filtre seccomp, mort par `SIGSYS` comptée comme un crash |
 | Secret commité ou action non épinglée | Job `security` |
 | Fuite d'un crash sensible | `crashes/` est ignoré par Git |
 
 ## Hors périmètre actuel
 
-Isolation par namespace, filtrage seccomp, et exécution d'un corpus non maîtrisé. Ces points arriveront dans des branches `feature/*` avec des tests dédiés, pas en élargissant ce que la CI a le droit de lancer.
+Les namespaces sont tentés avant `execve`, puis le filtre seccomp. Quand le noyau refuse l'un des deux, la cible tourne quand même et stderr le dit. `tests/integration/validate.sh` rejoue un crash, compare les arêtes, et vérifie qu'aucun processus cible ne reste. L'exécution d'un corpus non maîtrisé reste hors CI.
