@@ -8,6 +8,7 @@ section .text
 global privilege_blocked
 global privilege_guard
 global privilege_lock_child
+global close_inherited
 
 ; privilege_blocked - report whether these ids must not run the fuzzer.
 ; IN:  rdi uid, rsi euid, rdx gid, rcx egid
@@ -27,7 +28,9 @@ privilege_blocked:
     mov eax, 1
     ret
 
-; privilege_guard - refuse root and lock the fuzzer process itself.
+; privilege_guard - refuse root and drop capabilities in the fuzzer.
+; no_new_privs stays off here. The child sets it after creating namespaces,
+; because that flag makes CLONE_NEWUSER fail.
 ; OUT: rax 0, or -1
 privilege_guard:
     push rbx
@@ -51,9 +54,6 @@ privilege_guard:
     call privilege_blocked
     test rax, rax
     jnz .deny
-    call set_no_new_privs
-    test rax, rax
-    js .deny
     call drop_capabilities
     test rax, rax
     js .deny
@@ -67,16 +67,14 @@ privilege_guard:
     pop rbx
     ret
 
-; privilege_lock_child - apply the lock in the process image that calls execve.
+; privilege_lock_child - drop privileges in the process image that calls execve.
+; Inherited descriptors stay open so the caller can still report, then close them.
 ; OUT: rax 0, or -1
 privilege_lock_child:
     call set_no_new_privs
     test rax, rax
     js .fail
     call drop_capabilities
-    test rax, rax
-    js .fail
-    call close_inherited
     test rax, rax
     js .fail
     xor eax, eax

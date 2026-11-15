@@ -27,4 +27,17 @@ set -e
 [[ ! -e "$tmp/out.bin" ]]
 printf '%s\n' "$output" | grep -Eq '^edges 3$'
 
+echo "coverage: repeated identifiers collapse, and a flood still returns"
+printf 'x' > "$tmp/flood.bin"
+start=$(date +%s%3N)
+set +e
+output=$( "$fuzzer" --target "$bin/flood-target" --input "$tmp/flood.bin" \
+    --output "$tmp/flood-out.bin" --timeout 1000 --iterations 1 )
+status=$?
+set -e
+end=$(date +%s%3N)
+[[ "$status" -eq 0 ]]
+[[ $((end - start)) -lt 1500 ]]
+printf '%s\n' "$output" | grep -Eq '^edges 2$'
+
 echo "coverage checks passed"

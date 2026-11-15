@@ -1,5 +1,5 @@
 ; Classify a raw wait4 status word.
-; A fault is a crash. Resource-limit signals such as SIGKILL and SIGXCPU are not.
+; A fault is a crash. SIGSYS is the seccomp kill. SIGKILL and SIGXCPU are not faults.
 
 %include "constants.inc"
 
@@ -8,7 +8,7 @@ global wait_status_is_crash
 
 ; wait_status_is_crash - report whether a child died from a fault signal.
 ; IN:  rdi raw status returned through wait4
-; OUT: rax 1 for SIGILL, SIGTRAP, SIGABRT, SIGBUS, SIGFPE, or SIGSEGV, else 0
+; OUT: rax 1 for SIGILL, SIGTRAP, SIGABRT, SIGBUS, SIGFPE, SIGSEGV, or SIGSYS, else 0
 wait_status_is_crash:
     mov eax, edi
     and eax, 0x7f
@@ -25,6 +25,8 @@ wait_status_is_crash:
     cmp eax, SIGFPE
     je .yes
     cmp eax, SIGSEGV
+    je .yes
+    cmp eax, SIGSYS
     je .yes
 .no:
     xor eax, eax
@@ -59,6 +61,8 @@ classify_wait_status:
     cmp eax, SIGFPE
     je .crash
     cmp eax, SIGSEGV
+    je .crash
+    cmp eax, SIGSYS
     je .crash
 .error:
     mov eax, EXIT_ERROR

@@ -25,7 +25,9 @@ Avant d'écrire un crash, le fuzzer cherche le plus court préfixe qui reproduit
 
 La sortie compte les exécutions, y compris celles de la minimisation, et le débit en exécutions par seconde.
 
-Une cible instrumentée écrit des identifiants d'arêtes sur le descripteur 3. Si une exécution découvre une arête nouvelle, son entrée rejoint une file d'au plus 8 tampons de 64 octets et les essais suivants partent de cette file. Une cible sans instrumentation n'écrit rien : la campagne reste celle de la graine d'origine. `edges` donne le nombre d'arêtes distinctes vues pendant le processus.
+Une cible instrumentée écrit des identifiants de 16 bits sur le descripteur 3. Deux arêtes qui partagent le même numéro comptent pour une seule : c'est une collision, pas deux chemins. Le bitmap fait 65536 bits et ne grandit pas. Chaque exécution a son propre tube et remet à zéro ses marques avant de les publier dans le bitmap de la campagne. Le parent lit au plus 4096 identifiants à la fois, et abandonne le surplus au-delà de 65536 notes : le tube est vidé, la mémoire reste fixe.
+
+Si une exécution découvre une arête nouvelle, son entrée rejoint une file d'au plus 8 tampons de 64 octets, avec le jeu d'arêtes qui l'a fait entrer. L'emplacement 0 est la graine et n'est jamais remplacé. Quand la file est pleine, une entrée dont les arêtes sont déjà couvertes par les autres est retirée. S'il ne reste pas de place, l'entrée nouvelle remplace le plus petit score de nouveauté, et seulement si son score est strictement meilleur. Sinon elle est ignorée. Une cible sans instrumentation n'écrit rien : la campagne reste celle de la graine d'origine. `edges` donne le nombre d'arêtes distinctes vues pendant le processus.
 
 Le nombre d'essais est `--iterations`, y compris au-delà du voisinage des bits du corpus. La valeur par défaut reste 64.
 
@@ -51,7 +53,11 @@ Le délai par défaut est une seconde de temps réel (`--timeout`). À l'échéa
 
 `RLIMIT_CPU` reste un filet. Une cible bloquée dans `read` ou `pause` ne consomme presque pas de CPU : seul le délai mural l'arrête.
 
-Avant `execve`, l'enfant active `no_new_privs`, vide ses capacités, et ferme les descripteurs au-dessus du canal de couverture. Le fuzzer refuse de démarrer si son uid ou son gid réel ou effectif est root. Ce n'est pas encore un bac à sable : les namespaces, le système de fichiers restreint et seccomp viennent ensuite, voir [roadmap.md](roadmap.md).
+Avant `execve`, l'enfant essaie d'entrer dans des namespaces utilisateur, montage, PID et réseau. `no_new_privs` est posé seulement après : ce drapeau ferait échouer `CLONE_NEWUSER`. Si le noyau refuse les namespaces, la cible tourne quand même et stderr porte `namespaces none`. `namespaces full` veut dire que la cible est le PID 1 de son espace. `namespaces partial` veut dire qu'une partie seulement a été obtenue. Le réseau de la cible, quand l'espace réseau est créé, ne contient que la boucle locale.
+
+Quand ce namespace de montage existe, l'enfant copie la cible dans un tmpfs et en fait sa racine avec `pivot_root`, ou avec `chroot` si le pivot est refusé. `filesystem hidden` veut dire que la cible s'exécute sous `/target` et ne voit plus `/etc`. `filesystem host` veut dire que cette étape a échoué et que la vue de l'hôte est conservée. Les montages restent dans le namespace : ils ne remontent pas vers l'hôte.
+
+Ensuite l'enfant active `no_new_privs`, vide ses capacités, et ferme les descripteurs au-dessus du canal de couverture. Le filtre seccomp est posé après ce verrou. Il autorise les appels utilisés par les cibles du dépôt (`read`, `write`, `openat`, `exit`, `execve`, et quelques autres du même genre) et tue le reste avec `SIGSYS`, compté comme un crash. `seccomp on` veut dire que le filtre est en place. `seccomp none` veut dire que le noyau l'a refusé et que la cible tourne sans lui. Le fuzzer refuse de démarrer si son uid ou son gid réel ou effectif est root. Voir [roadmap.md](roadmap.md).
 
 ## Cible de démonstration
 

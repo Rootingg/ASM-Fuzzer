@@ -18,6 +18,7 @@
 %define SIGKILL 9
 %define SIGSEGV 11
 %define SIGXCPU 24
+%define SIGSYS  31
 
 %define RLIMIT_CPU 0
 %define RLIMIT_FSIZE 1
@@ -35,3 +36,7 @@
 %define COVER_QUEUE 8
 %define COVER_KEEP 64
 %define COV_FD 3
+%define EDGE_BITS 65536
+%define EDGE_BYTES 8192
+%define DRAIN_CHUNK 4096
+%define DRAIN_BUDGET 65536
