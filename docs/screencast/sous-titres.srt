@@ -1,0 +1,193 @@
+1
+00:00:00,000 --> 00:00:08,000
+ASM-Fuzzer est un fuzzer black-box pour Linux x86-64,
+écrit en NASM, sans libc.
+
+2
+00:00:08,000 --> 00:00:18,000
+Chaque étape est un appel système : lire la graine, la muter,
+lancer la cible avec execve, lire wait4, écrire le crash.
+
+3
+00:00:18,000 --> 00:00:30,000
+AFL++ et libFuzzer cachent ce mécanisme dans un gros programme C++.
+Ici, le but est de le voir.
+
+4
+00:00:30,000 --> 00:00:42,000
+Le dépôt est public. develop est la branche par défaut.
+main porte le tag v1.0.0.
+
+5
+00:00:42,000 --> 00:00:58,000
+Une campagne part d'une graine, applique une seule mutation,
+lance la cible, puis classe le résultat.
+
+6
+00:00:58,000 --> 00:01:12,000
+Les quatre résultats sont clean, crash, timeout et error.
+Un crash est minimisé, puis écrit dans un fichier.
+
+7
+00:02:00,000 --> 00:02:14,000
+main.asm lit la ligne de commande et appelle fuzz_campaign.
+Le moteur recopie la graine et appelle apply_mutation.
+
+8
+00:02:14,000 --> 00:02:28,000
+L'exécuteur crée un tube non bloquant, fait fork, puis execve.
+classify_wait_status lit le mot renvoyé par wait4.
+
+9
+00:02:28,000 --> 00:02:44,000
+Les codes sont 0 clean, 1 error, 2 crash, 3 timeout.
+Le délai mural par défaut est une seconde.
+
+10
+00:02:44,000 --> 00:03:02,000
+La cible est plafonnée à 5 secondes de CPU, 64 Mio d'adresse
+et 1 Mio de fichier.
+
+11
+00:03:02,000 --> 00:03:18,000
+Une cible bloquée dans read ne consomme pas de CPU.
+Seul le délai mural l'arrête, par SIGKILL.
+
+12
+00:04:30,000 --> 00:04:46,000
+Sans --seed, l'essai n inverse le bit n,
+tant qu'il reste des bits dans la graine.
+
+13
+00:04:46,000 --> 00:05:02,000
+Après, le résidu modulo 3 choisit byteflip, plus un, ou moins un.
+Avec --seed, un xorshift64 choisit la mutation.
+
+14
+00:05:02,000 --> 00:05:14,000
+--seed 0 est refusé : un état nul ne change plus.
+
+15
+00:05:14,000 --> 00:05:32,000
+La graine de démo est BRSH. Le premier essai inverse
+le bit de poids faible du B. 0x42 devient 0x43. Le mot devient CRSH.
+
+16
+00:06:30,000 --> 00:06:46,000
+La cible lit l'entrée standard. Si les quatre premiers octets
+sont CRSH, elle lit l'adresse zéro.
+
+17
+00:06:46,000 --> 00:07:02,000
+En little-endian, CRSH est le mot 0x48535243.
+Toute autre entrée se termine par zéro.
+
+18
+00:07:02,000 --> 00:07:16,000
+Le fuzzer ne contient pas ce mot.
+Il regarde seulement si le processus est mort d'un signal.
+
+19
+00:07:16,000 --> 00:07:32,000
+SIGSEGV est un crash. SIGSYS aussi : c'est la mort seccomp.
+SIGKILL et SIGXCPU sont des timeouts. Le code 127 est une erreur.
+
+20
+00:08:00,000 --> 00:08:16,000
+--input peut être un répertoire.
+Les fichiers réguliers sont triés par nom.
+
+21
+00:08:16,000 --> 00:08:34,000
+Avant d'écrire un crash, le moteur cherche le plus court préfixe
+qui refait le même signal, puis retire jusqu'à 32 octets.
+
+22
+00:08:34,000 --> 00:08:50,000
+--stop-on-crash est le défaut. Sans lui, chaque signal
+n'est gardé qu'une fois. wait4 ne donne pas l'adresse de la faute.
+
+23
+00:08:50,000 --> 00:09:08,000
+Une cible instrumentée écrit un identifiant de 16 bits
+sur le descripteur 3. Huit entrées de 64 octets sont gardées.
+
+24
+00:09:08,000 --> 00:09:24,000
+Deux arêtes du même numéro n'en font qu'une.
+La démo n'est pas instrumentée : edges reste à zéro.
+
+25
+00:10:30,000 --> 00:10:48,000
+Avant execve : namespaces, racine réduite,
+no_new_privs, capacités vidées, puis seccomp.
+
+26
+00:10:48,000 --> 00:11:04,000
+no_new_privs est posé après les namespaces,
+sinon CLONE_NEWUSER échoue.
+
+27
+00:11:04,000 --> 00:11:22,000
+En local : namespaces full, filesystem hidden, seccomp on.
+La cible est le PID 1 et n'ouvre plus /etc/passwd.
+
+28
+00:11:22,000 --> 00:11:42,000
+Sur un runner GitHub, le namespace utilisateur est souvent refusé.
+L'essai est relancé : namespaces none, filesystem host.
+
+29
+00:11:42,000 --> 00:12:00,000
+mmap et brk ne sont pas autorisés.
+Un binaire C habituel meurt par SIGSYS.
+
+30
+00:13:00,000 --> 00:13:16,000
+La graine BRSH est à un bit de CRSH.
+Le fuzzer ne connaît pas ce mot.
+
+31
+00:13:16,000 --> 00:13:36,000
+On écrit BRSH, on lance asm-fuzzer sur demo-target,
+64 itérations, sortie crash.bin.
+
+32
+00:13:36,000 --> 00:13:52,000
+La sortie est crash, execs 7, un débit, edges 0.
+Le code de sortie est 2.
+
+33
+00:13:52,000 --> 00:14:08,000
+Le 7 compte la découverte et la minimisation.
+On rejoue crash.bin dans la cible.
+
+34
+00:14:08,000 --> 00:14:22,000
+La cible meurt par SIGSEGV. Le shell affiche 139,
+c'est 128 plus 11.
+
+35
+00:14:22,000 --> 00:14:40,000
+stderr, en local : namespaces full,
+filesystem hidden, seccomp on.
+
+36
+00:14:40,000 --> 00:15:00,000
+La CI a quatre jobs : build, test, lint, security.
+Elle ne lance que des cibles assemblées dans ce dépôt.
+
+37
+00:15:30,000 --> 00:15:48,000
+Le bac à sable recule si le noyau refuse les namespaces.
+execve et openat restent autorisés.
+
+38
+00:15:48,000 --> 00:16:06,000
+La déduplication s'arrête au signal.
+La file de couverture garde huit entrées.
+
+39
+00:16:06,000 --> 00:16:20,000
+Ces limites sont écrites dans le modèle de menace.
+La v1.0.0 est le périmètre livré.
