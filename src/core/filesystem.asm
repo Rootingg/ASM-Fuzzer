@@ -315,10 +315,6 @@ note_fs:
     mov eax, SYS_write
     syscall
     add rsp, 16
-    mov edi, [rel ns_write_fd]
-    mov eax, SYS_close
-    syscall
-    mov dword [rel ns_write_fd], -1
 .done:
     ret
 
