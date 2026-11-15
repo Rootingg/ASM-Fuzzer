@@ -14,6 +14,8 @@ Les objets et les binaires vont dans `build/`, qui n'est pas versionné. Pour la
 make BUILD=/tmp/asm-fuzzer-build test
 ```
 
+`tests/integration/validate.sh` est le passage de release : il tourne avec `make test`. Il exige un rejeu `SIGSEGV`, au moins 50 exécutions par seconde sur 256 essais, plus d'arêtes sur la cible instrumentée que sur la cible aveugle, aucun processus cible encore vivant, et un pic mémoire du fuzzer sous 64 Mio.
+
 ## Convention assembleur
 
 - Syntaxe NASM, format ELF64.
