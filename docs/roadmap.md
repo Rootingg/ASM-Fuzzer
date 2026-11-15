@@ -46,6 +46,6 @@ Le code de l'isolation et l'évaluation sont sur cette branche. `main` reçoit l
 - `feature/namespace-isolation` : espaces utilisateur, montage, PID et réseau. Le repli est `namespaces none` ou `namespaces partial`.
 - `feature/filesystem-isolation` : racine réduite à la copie de la cible. Le repli est `filesystem host`.
 - `feature/seccomp-policy` : liste d'appels autorisés. Le repli est `seccomp none`. Un appel refusé meurt par `SIGSYS`.
-- Évaluation : `tests/integration/validate.sh`. Rejeu du crash, débit, arêtes contre une cible aveugle, absence de processus restant, durée et mémoire bornées. Passage local : 256 essais en 379 ms, 701 exec/s, 3 arêtes contre 0, pic 60 Kio, `namespaces full`, `filesystem hidden`, `seccomp on`.
+- Évaluation : `tests/integration/validate.sh`. Rejeu du crash, débit, arêtes contre une cible aveugle, absence de processus restant, et 256 essais en moins de 15 secondes.
 
 Une cible non fiable ne doit pas être lancée sur un runner GitHub.
