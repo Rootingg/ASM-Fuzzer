@@ -34,6 +34,10 @@ global ns_write_fd
 ns_write_fd: dd -1
 ns_seen: db 0
 ns_mode: db 0
+global ns_off
+global need_retry
+ns_off: db 0
+need_retry: db 0
 
 section .text
 global namespace_enter
@@ -51,6 +55,8 @@ namespace_enter:
     push r14
     push r15
 
+    cmp byte [rel ns_off], 0
+    jne .unavailable
     mov eax, SYS_geteuid
     syscall
     mov r12, rax
@@ -63,6 +69,7 @@ namespace_enter:
     syscall
     test rax, rax
     jns .created
+.unavailable:
     xor ebx, ebx
     call report_mode
     xor eax, eax
@@ -74,7 +81,7 @@ namespace_enter:
     mov rsi, r13
     call write_id_maps
     test rax, rax
-    js .broken
+    js .abort_setup
     call make_mounts_private
     test rax, rax
     jns .pid
@@ -144,6 +151,9 @@ namespace_enter:
     mov eax, SYS_exit
     syscall
 
+.abort_setup:
+    mov ebx, 0xff
+    call report_mode
 .broken:
     mov edi, 127
     mov eax, SYS_exit
@@ -179,10 +189,16 @@ namespace_announce:
     cmp rax, 1
     jl .leave
     mov qword [rsp + 8], rax
+    movzx ebx, byte [rsp]
+    cmp ebx, 0xff
+    jne .publish
+    mov byte [rel ns_off], 1
+    mov byte [rel need_retry], 1
+    jmp .fs_byte
+.publish:
     cmp byte [rel ns_seen], 0
     jne .fs_byte
     mov byte [rel ns_seen], 1
-    movzx ebx, byte [rsp]
     lea rsi, [rel msg_none]
     mov edx, msg_none_len
     test ebx, ebx

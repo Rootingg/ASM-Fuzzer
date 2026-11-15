@@ -17,6 +17,7 @@ extern queue_reset
 extern queue_seed
 extern queue_base
 extern queue_admit
+extern need_retry
 global fuzz_campaign
 
 ; fuzz_campaign - run one campaign.
@@ -133,7 +134,12 @@ fuzz_campaign:
     cmp rax, EXIT_TIMEOUT
     je .on_timeout
     cmp rax, EXIT_ERROR
-    je .bad_stack
+    jne .not_error
+    cmp byte [rel need_retry], 1
+    jne .bad_stack
+    mov byte [rel need_retry], 0
+    jmp .run
+.not_error:
     cmp rax, 0
     jl .bad_stack
     jmp .next

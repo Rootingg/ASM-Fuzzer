@@ -37,6 +37,8 @@ extern namespace_enter
 extern namespace_announce
 extern filesystem_enter
 extern seccomp_apply
+extern ns_off
+extern need_retry
 extern close_inherited
 extern ns_write_fd
 global execute_target
@@ -264,6 +266,18 @@ execute_target:
     mov eax, [rsp + 8]
     mov [r11], eax
 .classify_call:
+    mov eax, [rsp + 8]
+    and eax, 0x7f
+    jnz .classify_status
+    mov eax, [rsp + 8]
+    shr eax, 8
+    cmp eax, 127
+    jne .classify_status
+    cmp byte [rel ns_off], 0
+    jne .classify_status
+    mov byte [rel ns_off], 1
+    mov byte [rel need_retry], 1
+.classify_status:
     mov edi, [rsp + 8]
     call classify_wait_status
     jmp .cleanup
