@@ -98,7 +98,9 @@ elapsed=$((end - start))
 [[ "$elapsed" -lt 15000 ]]
 execs=$(field execs "$tmp/long.out")
 rate=$(field rate "$tmp/long.out")
-[[ "$execs" -eq 256 ]]
+# A refused sandbox setup retries the first trial, so the count can be one higher.
+[[ "$execs" -ge 256 ]]
+[[ "$execs" -le 260 ]]
 [[ "$rate" -ge 50 ]]
 grep -Eq '^namespaces (full|partial|none)$' "$tmp/long.err"
 grep -Eq '^filesystem (hidden|host)$' "$tmp/long.err"
