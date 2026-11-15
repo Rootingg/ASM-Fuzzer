@@ -1,0 +1,7 @@
+build/
+crashes/
+*.o
+*.obj
+*.exe
+*.log
+.DS_Store

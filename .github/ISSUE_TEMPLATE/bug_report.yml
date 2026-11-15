@@ -1,0 +1,27 @@
+name: Rapport de bug
+description: Un défaut reproductible du fuzzer, du build ou des tests.
+title: "fix: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Résumé
+      description: Ce qui se produit, et ce qui était attendu.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Commandes, branche et entrée minimale. Ne joins pas de binaire tiers ni de données sensibles.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environnement
+      description: Distribution, version de NASM, version de binutils.
+    validations:
+      required: true

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Build the fuzzer and run the unit binaries plus the controlled campaign.
+set -euo pipefail
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$root"
+
+export BUILD="${BUILD:-build}"
+
+make tools
+bash "$root/scripts/run-units.sh"
+bash "$root/tests/integration/campaign.sh"
+bash "$root/tests/integration/timeouts.sh"
+bash "$root/tests/integration/mutations.sh"
+bash "$root/tests/integration/corpus.sh"
+bash "$root/tests/integration/coverage.sh"
+bash "$root/tests/integration/privilege.sh"
+bash "$root/tests/integration/namespace.sh"
+bash "$root/tests/integration/filesystem.sh"
+bash "$root/tests/integration/seccomp.sh"
+bash "$root/tests/integration/validate.sh"
