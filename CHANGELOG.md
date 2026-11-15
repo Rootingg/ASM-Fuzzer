@@ -4,6 +4,8 @@ Le format est inspiré de Keep a Changelog. Les versions suivent Semantic Versio
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-15
+
 ### Added
 
 - Évaluation de bout en bout : rejeu du crash, débit, couverture contre une cible aveugle, et absence de processus laissé derrière.
