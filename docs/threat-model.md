@@ -13,7 +13,7 @@ Le fuzzer est un outil local. Il exécute une cible choisie par l'opérateur. Ce
 ## Hypothèses
 
 - L'opérateur a le droit de lancer la cible sur la machine où tourne le fuzzer.
-- La CI n'exécute que des cibles compilées depuis les sources du dépôt : `demo-target`, `spin-target`, `stall-target` et `block-read-target`.
+- La CI n'exécute que des cibles compilées depuis les sources du dépôt : `demo-target`, `spin-target`, `stall-target`, `block-read-target`, `multi-target`, `shrink-target`, `path-target`, `flood-target`, `priv-target`, `ns-target`, `fs-target`, `sec-target` et `sec-deny-target`.
 - Les runners GitHub hébergés ne reçoivent pas de binaire tiers.
 - Un crash d'une cible tierce n'est pas une vulnérabilité d'ASM-Fuzzer.
 
@@ -33,6 +33,12 @@ Le fuzzer est un outil local. Il exécute une cible choisie par l'opérateur. Ce
 | Secret commité ou action non épinglée | Job `security` |
 | Fuite d'un crash sensible | `crashes/` est ignoré par Git |
 
-## Hors périmètre actuel
+## Limites connues de la v1.0.0
 
-Les namespaces sont tentés avant `execve`, puis le filtre seccomp. Quand le noyau refuse l'un des deux, la cible tourne quand même et stderr le dit. `tests/integration/validate.sh` rejoue un crash, compare les arêtes, et vérifie qu'aucun processus cible ne reste. L'exécution d'un corpus non maîtrisé reste hors CI.
+- Si le noyau refuse le namespace utilisateur, le premier essai est relancé et stderr porte `namespaces none` puis `filesystem host`. Le filtre seccomp reste posé quand le noyau l'accepte.
+- `execve` et `openat` sont autorisés. Quand la racine de l'hôte est encore visible, la cible peut ouvrir un chemin.
+- `mmap` et `brk` ne sont pas autorisés.
+- Deux crashs du même signal ne font qu'une entrée. Le statut `wait4` ne donne pas d'adresse de faute.
+- La file de couverture garde huit entrées de 64 octets. Un identifiant d'arête fait 16 bits : deux arêtes du même numéro n'en font qu'une.
+
+L'exécution d'un corpus non maîtrisé reste hors CI.

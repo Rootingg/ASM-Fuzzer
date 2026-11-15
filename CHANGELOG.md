@@ -4,6 +4,11 @@ Le format est inspiré de Keep a Changelog. Les versions suivent Semantic Versio
 
 ## [Unreleased]
 
+### Changed
+
+- La feuille de route, l'architecture et le modèle de menace décrivent `v1.0.0` et ses limites.
+- Les actions GitHub sont épinglées sur checkout 7.0.1, upload-artifact 7.0.2 et CodeQL 4.39.3.
+
 ## [1.0.0] - 2026-11-15
 
 ### Added

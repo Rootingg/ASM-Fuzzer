@@ -1,6 +1,6 @@
 # Feuille de route
 
-Aucun tag n'est posé. La première version prévue est `v1.0.0`, par `release/*`, selon [release.md](release.md).
+`v1.0.0` est le premier tag, posé sur `main`. Les lignes v0.1 à v0.4 n'ont pas de tag séparé : elles sont dans cette version. L'ordre suivi est dans [release.md](release.md).
 
 ## v0.1.0 — Bootstrap stable
 
@@ -13,7 +13,7 @@ Rendre l'exécution mesurable et sûre avant d'élargir les mutations.
 
 ## v0.2.0 — Moteur de mutation
 
-Présent sur `develop`. Le tag attend une branche `release/*`.
+Livré dans `v1.0.0`.
 
 - Bitflip, byteflip et arithmétique sont branchés dans la campagne.
 - `--iterations` dépasse le voisinage des premiers bits.
@@ -23,7 +23,7 @@ Présent sur `develop`. Le tag attend une branche `release/*`.
 
 ## v0.3.0 — Corpus
 
-Présent sur `develop`. Le tag attend une branche `release/*`.
+Livré dans `v1.0.0`.
 
 - Un répertoire passé à `--input` fournit plusieurs graines, dans l'ordre des noms.
 - Chaque crash est réduit au plus court préfixe, puis à des octets retirés.
@@ -31,7 +31,7 @@ Présent sur `develop`. Le tag attend une branche `release/*`.
 
 ## v0.4.0 — Guidé par la couverture
 
-Présent sur `develop`. Le tag attend une branche `release/*`.
+Livré dans `v1.0.0`.
 
 - Les cibles instrumentées marquent des arêtes sur le descripteur 3.
 - Une entrée qui ouvre une arête nouvelle est reprise comme base des mutations suivantes.
@@ -40,12 +40,12 @@ Présent sur `develop`. Le tag attend une branche `release/*`.
 
 ## v1.0.0 — Première version mature
 
-Le code de l'isolation et l'évaluation sont sur cette branche. `main` reçoit le tag `v1.0.0` par une PR `release/*`, après l'intégration dans `develop`. L'ordre est dans [release.md](release.md).
+Taguée sur `main`.
 
-- `feature/privilege-isolation` : `no_new_privs`, capacités vidées, refus du root, descripteurs hérités fermés. Déjà sur `develop`.
-- `feature/namespace-isolation` : espaces utilisateur, montage, PID et réseau. Le repli est `namespaces none` ou `namespaces partial`.
-- `feature/filesystem-isolation` : racine réduite à la copie de la cible. Le repli est `filesystem host`.
-- `feature/seccomp-policy` : liste d'appels autorisés. Le repli est `seccomp none`. Un appel refusé meurt par `SIGSYS`.
-- Évaluation : `tests/integration/validate.sh`. Rejeu du crash, débit, arêtes contre une cible aveugle, absence de processus restant, et 256 essais en moins de 15 secondes.
+- Privilèges : `no_new_privs`, capacités vidées, refus du root, descripteurs hérités fermés.
+- Namespaces utilisateur, montage, PID et réseau, avec repli `namespaces none` ou `namespaces partial`.
+- Racine réduite à la copie de la cible, avec repli `filesystem host`.
+- Filtre seccomp, avec repli `seccomp none`. Un appel refusé meurt par `SIGSYS`.
+- Évaluation : `tests/integration/validate.sh`.
 
-Une cible non fiable ne doit pas être lancée sur un runner GitHub.
+Les limites de cette version sont dans [threat-model.md](threat-model.md). Une cible non fiable ne doit pas être lancée sur un runner GitHub.

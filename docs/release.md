@@ -1,12 +1,10 @@
 # Release v1.0.0
 
-Le code et l'évaluation locale sont prêts. Le tag attend que GitHub Actions accepte de démarrer.
+Le tag `v1.0.0` est sur `main`, au merge de la pull request #18. Le workflow Release a publié l'artefact. `develop` contient ce merge.
 
-## Ce qui bloque
+Une release suivante suit le même ordre : branche `release/*` depuis `develop`, pull request vers `main`, tag annoté sur le commit de `main`, puis synchronisation vers `develop`. Les checks `build`, `test`, `lint` et `security` doivent être verts. Le squash et le rebase restent désactivés.
 
-Les rulesets exigent `build`, `test`, `lint` et `security` avant un merge vers `develop` ou `main`. Tant que le compte affiche « locked due to a billing issue », ces jobs ne démarrent pas. Rien ne se merge, et `v1.0.0` ne se pose pas. La page à regarder est https://github.com/settings/billing.
-
-## Ordre, une fois les jobs verts
+## Ordre suivi pour v1.0.0
 
 Les pull requests se mergent par merge commit, dans cet ordre, chacune dans sa base :
 

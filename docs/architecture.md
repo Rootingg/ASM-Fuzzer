@@ -47,7 +47,7 @@ Le délai par défaut est une seconde de temps réel (`--timeout`). À l'échéa
 | Résultat | Signification | Code |
 | --- | --- | --- |
 | `clean` | L'enfant s'est terminé sans fault | 0 |
-| `crash` | `SIGILL`, `SIGTRAP`, `SIGABRT`, `SIGBUS`, `SIGFPE`, `SIGSEGV` | 2 |
+| `crash` | `SIGILL`, `SIGTRAP`, `SIGABRT`, `SIGBUS`, `SIGFPE`, `SIGSEGV`, `SIGSYS` | 2 |
 | `timeout` | Échéance murale, `SIGKILL` ou `SIGXCPU` | 3 |
 | `error` | Le lancement a échoué, ou l'enfant s'est terminé avec le code 127 | 1 |
 
@@ -57,7 +57,7 @@ Avant `execve`, l'enfant essaie d'entrer dans des namespaces utilisateur, montag
 
 Quand ce namespace de montage existe, l'enfant copie la cible dans un tmpfs et en fait sa racine avec `pivot_root`, ou avec `chroot` si le pivot est refusé. `filesystem hidden` veut dire que la cible s'exécute sous `/target` et ne voit plus `/etc`. `filesystem host` veut dire que cette étape a échoué et que la vue de l'hôte est conservée. Les montages restent dans le namespace : ils ne remontent pas vers l'hôte.
 
-Ensuite l'enfant active `no_new_privs`, vide ses capacités, et ferme les descripteurs au-dessus du canal de couverture. Le filtre seccomp est posé après ce verrou. Il autorise les appels utilisés par les cibles du dépôt (`read`, `write`, `openat`, `exit`, `execve`, et quelques autres du même genre) et tue le reste avec `SIGSYS`, compté comme un crash. `seccomp on` veut dire que le filtre est en place. `seccomp none` veut dire que le noyau l'a refusé et que la cible tourne sans lui. Le fuzzer refuse de démarrer si son uid ou son gid réel ou effectif est root. Voir [roadmap.md](roadmap.md).
+Ensuite l'enfant active `no_new_privs`, vide ses capacités, et ferme les descripteurs au-dessus du canal de couverture. Le filtre seccomp est posé après ce verrou. Il autorise les appels des cibles du dépôt (`read`, `write`, `close`, `openat`, `exit`, `execve`, `pause`, `getpid`, `fcntl`, `capget`, `prctl`, `close_range`) et tue le reste avec `SIGSYS`, compté comme un crash. `execve` et `openat` restent dans la liste. `mmap` et `brk` n'y sont pas : un binaire C habituel meurt. `seccomp on` veut dire que le filtre est en place. `seccomp none` veut dire que le noyau l'a refusé et que la cible tourne sans lui. Le fuzzer refuse de démarrer si son uid ou son gid réel ou effectif est root. Voir [roadmap.md](roadmap.md).
 
 ## Cible de démonstration
 
