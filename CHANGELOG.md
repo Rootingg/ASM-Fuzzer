@@ -6,6 +6,7 @@ Le format est inspiré de Keep a Changelog. Les versions suivent Semantic Versio
 
 ### Changed
 
+- Le README décrit le tag `v1.0.0` et la démo `BRSH`. Les docs d'architecture et de Git Flow ont un schéma.
 - La feuille de route, l'architecture et le modèle de menace décrivent `v1.0.0` et ses limites.
 - Les actions GitHub sont épinglées sur checkout 7.0.1, upload-artifact 7.0.2 et CodeQL 4.39.3.
 
